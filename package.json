@@ -1,0 +1,27 @@
+{
+  "name": "Clues.js",
+  "version": "0.0.2",
+  "description": "Lightweight dependency solver for aync functions, based on promises.",
+  "keywords": [
+    "asynchronous",
+    "async",
+    "promises"
+  ],
+  "author": "(c) Ziggy Jonsson (http://github.com/zjonsson/)",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/ZJONSSON/clues.js.git"
+  },
+  "main": "clues.js",
+  "dependencies": {
+    "q": "0.9.3",
+  },
+  "devDependencies": {
+    "uglify-js2": "~2.1.11",
+     "vows": "0.7.x"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "./node_modules/vows/bin/vows"
+  }
+}
