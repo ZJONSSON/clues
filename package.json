@@ -1,5 +1,5 @@
 {
-  "name": "Clues.js",
+  "name": "clues",
   "version": "0.0.2",
   "description": "Lightweight dependency solver for aync functions, based on promises.",
   "keywords": [
@@ -14,7 +14,7 @@
   },
   "main": "clues.js",
   "dependencies": {
-    "q": "0.9.3",
+    "q": "0.9.3"
   },
   "devDependencies": {
     "uglify-js2": "~2.1.11",
