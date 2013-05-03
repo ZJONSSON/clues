@@ -30,7 +30,12 @@
     return match[1].replace(/\s/g,'').split(",");
   }
 
-  clues.prototype.solve= function(ref,local) {
+  // Simple wrapper that can be overwritten by cache functions
+  clues.prototype.solve = function(ref,local) {
+    return this._solve(ref,local);
+  };
+
+  clues.prototype._solve= function(ref,local) {
     var self = this;
     var promise = self.adapter,
         p = promise.pending(),
