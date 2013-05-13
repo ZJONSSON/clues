@@ -30,20 +30,16 @@
     return match[1].replace(/\s/g,'').split(",");
   }
 
-  // Simple wrapper that can be overwritten by cache functions
-  clues.prototype.solve = function(ref,local) {
-    return this._solve(ref,local);
-  };
-
-  clues.prototype._solve= function(ref,local) {
+  clues.prototype.solve = function(fn,local) {
     var self = this;
     var promise = self.adapter,
         p = promise.pending(),
-        fn;
+        ref;
 
     local = local || {};
 
-    if (typeof ref !== "function") {
+    if (typeof fn !== "function") {
+      ref = fn;
       // Local variables supercede anything else
       if (local[ref]) return promise.fulfilled(local[ref]);
       // If we have already determined the fact we simply return it
@@ -59,12 +55,15 @@
       });
       // Moving on to the defined function of the logic table
       fn = self.logic[ref];
-    } else {fn = ref;ref = null;}
+    }
 
     // Create a local context object (this) for the function
     var context = {
+      ref : ref,
+      self : self,
       local : local,
       facts : self.facts,
+      promise : p.promise,
       fulfill : p.fulfill,
       reject: function(d) { return p.reject({ref:ref,err:d});},
       callback : function(err,d) {
@@ -87,13 +86,17 @@
     // Wait for all arguments to be resolved before executing the function
     this.join(args)
       .then(function() {
-        var value =  fn.apply(context,args);
+        var value =  self.wrap.call(context,fn,args);
         if (value !== undefined) p.fulfill(value);
       },function(err) {
         p.reject(err);
       });
 
     return p.promise;
+  };
+
+  clues.prototype.wrap = function(fn,args) {
+    return fn.apply(this,args);
   };
 
   // Resolves all logic into facts
