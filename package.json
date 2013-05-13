@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Lightweight dependency solver for aync functions, based on promises.",
   "keywords": [
     "asynchronous",

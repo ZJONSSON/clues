@@ -87,7 +87,10 @@
     this.join(args)
       .then(function() {
         var value =  self.wrap.call(context,fn,args);
-        if (value !== undefined) p.fulfill(value);
+        if (value !== undefined) {
+          if (value.then) value.then(p.fulfill,p.reject);
+          else p.fulfill(value);
+        }
       },function(err) {
         p.reject(err);
       });
