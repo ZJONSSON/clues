@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Lightweight dependency solver for aync functions, based on promises.",
   "keywords": [
     "asynchronous",
@@ -10,7 +10,7 @@
   "author": "(c) Ziggy Jonsson (http://github.com/zjonsson/)",
   "repository": {
     "type": "git",
-    "url": "http://github.com/ZJONSSON/clues.js.git"
+    "url": "http://github.com/ZJONSSON/clues.git"
   },
   "main": "clues.js",
   "dependencies": {
