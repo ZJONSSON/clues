@@ -14,7 +14,7 @@
     self.clues = clues;
   }
 
-  clues.version = "0.0.6";
+  clues.version = "0.0.7";
 
   function clues(logic,facts) {
     if (!(this instanceof clues))
@@ -65,7 +65,7 @@
       facts : self.facts,
       promise : p.promise,
       fulfill : p.fulfill,
-      reject: function(d) { return p.reject({ref:ref,err:d});},
+      reject: function(e) { return p.reject(e);},
       callback : function(err,d) {
         if (err) p.reject(err);
         else p.fulfill(d);
@@ -97,7 +97,14 @@
         p.reject(err);
       });
 
-    return p.promise;
+    return p.promise
+      .then(null,function(e) {
+        // Convert error object to text
+        if (e.message) e = e.message;
+        // Add a reference, if it doesn't exist
+        if (!e.ref) e= {ref:ref,err:e};
+        throw e;
+      });
   };
 
   clues.prototype.wrap = function(fn,args) {
