@@ -14,7 +14,7 @@
     self.clues = clues;
   }
 
-  clues.version = "0.0.5";
+  clues.version = "0.0.6";
 
   function clues(logic,facts) {
     if (!(this instanceof clues))
@@ -86,11 +86,13 @@
     // Wait for all arguments to be resolved before executing the function
     this.join(args)
       .then(function() {
-        var value =  self.wrap.call(context,fn,args);
-        if (value !== undefined) {
-          if (value.then) value.then(p.fulfill,p.reject);
-          else p.fulfill(value);
-        }
+        try {
+          var value =  self.wrap.call(context,fn,args);
+          if (value !== undefined) {
+            if (value.then) value.then(p.fulfill,p.reject);
+            else p.fulfill(value);
+          }
+        } catch(e) { p.reject(e);}
       },function(err) {
         p.reject(err);
       });
