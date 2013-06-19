@@ -65,7 +65,7 @@
       facts : self.facts,
       promise : p.promise,
       fulfill : p.fulfill,
-      reject: function(e) { return p.reject(e);},
+      reject: p.reject,
       callback : function(err,d) {
         if (err) p.reject(err);
         else p.fulfill(d);
@@ -86,14 +86,13 @@
     // Wait for all arguments to be resolved before executing the function
     this.join(args)
       .then(function() {
-        try {
-          var value =  self.wrap.call(context,fn,args);
-          if (value !== undefined) {
-            if (value.then) value.then(p.fulfill,p.reject);
-            else p.fulfill(value);
-          }
-        } catch(e) { p.reject(e);}
-      },function(err) {
+        var value =  self.wrap.call(context,fn,args);
+        if (value !== undefined) {
+          if (value.then) value.then(p.fulfill,p.reject);
+          else p.fulfill(value);
+        }
+      })
+      .then(null,function(err) {
         p.reject(err);
       });
 
@@ -162,9 +161,7 @@
           args[i] = d;
           return !(l-=1) && p.fulfill(args);
         },
-        function(err) {
-          p.reject(err);
-        });
+        p.reject);
     });
     return p.promise;
   };
