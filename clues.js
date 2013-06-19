@@ -26,8 +26,9 @@
   // Extract argument names from a function
   var reArgs = /function.*?\((.*?)\).*/;
   function matchArgs(fn) {
+    if (fn.__args__) return fn.__args__;
     var match = reArgs.exec(fn.prototype.constructor.toString());
-    return match[1].replace(/\s/g,'').split(",");
+    return fn.__args__ = match[1].replace(/\s/g,'').split(",");
   }
 
   clues.prototype.solve = function(fn,local) {
