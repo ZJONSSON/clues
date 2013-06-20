@@ -1,5 +1,5 @@
 # clues.js
-[Promises](https://github.com/promises-aplus) provide a very effective mechanism to construct complex interactions between asynchronous functions.  Most promise libraries focus on the promise object itself, and leave the actual structuring of complex structuring up to the user.
+[Promises](https://github.com/promises-aplus) provide a very effective mechanism to construct complex interactions between asynchronous functions.  Most promise libraries focus on the promise object itself, and leave the actual structuring of complex logic up to the user.
 
 **clues.js** simplifies structuring of long complex chains of logic by recursively and automatically solving dependencies for any given logical operation.  Output of any logic is memoized in a fact table, for a quick reuse
 
