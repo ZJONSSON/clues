@@ -14,7 +14,7 @@
     self.clues = clues;
   }
 
-  clues.version = "1.0.0";
+  clues.version = "1.0.1";
 
   function clues(logic,facts) {
     if (!(this instanceof clues))
@@ -99,8 +99,6 @@
 
     return p.promise
       .then(null,function(e) {
-        // Convert error object to text
-        if (e.message) e = e.message;
         // Add a reference, if it doesn't exist
         if (!e.ref) e= {ref:ref,err:e};
         throw e;
