@@ -100,7 +100,7 @@
     return p.promise
       .then(null,function(e) {
         // Add a reference, if it doesn't exist
-        if (!e.ref) e= {ref:ref,err:e};
+        if (!e.err) e= {ref:ref,err:e};
         throw e;
       });
   };
