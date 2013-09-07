@@ -1,0 +1,16 @@
+{
+  "name": "clues",
+  "version": "1.0.1",
+  "main": "clues.js",
+  "scripts": [
+    "clues.js"
+  ],
+  "ignore": [
+    ".git",
+    ".gitignore",
+    ".npmignore",
+    "node_modules",
+    "package.json",
+    "test"
+  ]
+}
