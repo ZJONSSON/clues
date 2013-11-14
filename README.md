@@ -1,3 +1,6 @@
+Change in version 1.1.x: 
+facts can now be defined as being optional in a function signature by prefixing the name with an underscore. Optional facts will return `null` if unresolved.
+
 # clues.js
 [Promises](https://github.com/promises-aplus) provide a very effective mechanism to construct complex interactions between asynchronous functions.  Most promise libraries focus on the promise object itself, and leave the actual structuring of complex logic up to the user.
 
@@ -22,15 +25,28 @@ The logic object is used as read-only (i.e. any results will **only** alter fact
 
 If no logic is provided to clues in a browser environment, it will use the global object (Window)
 
-### `clues.solve(function(arg1,arg2...) { .... } ,[local_vars])`
-This schedules an execution of the supplied function.  The argument names of the function will be parsed and matched to facts and logic within the instance object by argument name.  Any arguments that point to neither a fact nor logic (nor locals) will result in an error.  The supplied function is essentially a callback function that is executed when the inputs are known.  
+### `clues.solve(function(arg1,arg2...) { ... } ,[local_vars])`
+##### Supplied Function
+This schedules an execution of the supplied function.  The argument names of the function will be parsed and matched to facts and logic within the instance object by argument name.  Any arguments that point to neither a fact nor logic (nor locals) will result in an error (unless prefixed with an underscore, making it optional).  The supplied function is essentially a callback function that is executed when the inputs are known.  
 
+##### Local Variables
 The second argument (optional) allows local variables that will be used, and have priority, against facts and logic.  The is to provide the flexibility to have functions respond to request specific variables, such as a response stream or to override any previously determined facts.  Please note however, that locals should really be used at end-points in logic, to ensure that locals do not contaminate derived facts.
 
+##### Optional facts
+By default all arguments have to be resolved for a function to be evaluated.  Any fact (i.e. argument name) can however be made optional by prefixing it with an underscore.  Any unresolved fact that is optional will show as `null` inside the function.  The following function will fail if fact `A` can not be resolved, but return `[fact_A,null]` if fact A exists but fact B can not be resolved:
+
+```js
+clues.solve(A,_B) {
+  return [A,_B]
+}
+```
+Please keep in mind that any variable that is referred to as optional will look for the un-prefixed name in the fact/logic tables.  A fact can therefore be optional in one function (name prefixed with underscore) and required in another (no prefix).  
+
+##### Return = promise
 The solve function always returns a promise.  As the main operations take place in the user supplied function, the subsequent promise might be of less interest, except for error handling. 
 
 ### `clues.solve("name",[local_vars])`
-The exec function can also be called with a string name as first parameter and an optional locals object as the second parameter.  This is essentially the same as calling clues exec with a function with only one variable (i.e. name) and is ideal if you need to only work with one fact variable at a time.  
+The exec function can also be called with a string name as first parameter and an optional locals object as the second parameter.  This is essentially the same as calling clues exec with a function with only one variable (i.e. name) and is ideal if you need to only work with one fact variable at a time.  As before if the name if prefixed with an underscore it is considered optional and returns `null` if unresolved.
 
 ### `clues.logic = {}`
 Key/value dictionary of logic functions and/or values.   Functions in the logic object must only contain arguments names that correspond to either facts or as other logic functions/values.    Each logic function must either return a value/promise, or execute a callback/resolve/error at some point with the resolved value or an error. A classical way to execute the callback is to call `this.callback(err,value)` ensuring that the `this` object passed at the top is stored as a local variable if the results are returned from a deeper scope.
