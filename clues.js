@@ -31,7 +31,7 @@
     return fn.__args__ = match[1].replace(/\s/g,'').split(",");
   }
 
-  clues.prototype.solve = function(fn,local) {
+  clues.prototype.solve = function(fn,local,optional) {
     var self = this;
     var promise = self.adapter,
         p = promise.pending(),
@@ -46,7 +46,8 @@
       // If we have already determined the fact we simply return it
       if (self.facts[ref] !== undefined) return promise.fulfilled(self.facts[ref]);
       // If we can't find any logic for the reference at this point, we return an error
-      if (self.logic[ref] === undefined) return promise.rejected({ref:ref,err:'not defined'});
+      if (self.logic[ref] === undefined)
+        return (optional) ? promise.fulfilled(null) : promise.rejected({ref:ref,err:'not defined'});
       // If the logic reference is not a function, we simply return the value
       if (typeof self.logic[ref] !== 'function' ) return promise.fulfilled(self.logic[ref]);
       // Schedule an update where we overwrite fact table with the result
@@ -81,7 +82,9 @@
         // Request for 'all' variables is handled specially
         if (arg == 'all') return self.all();
         // If arg is in context we apply directly, otherwise we need to solve for the answer
-        return context[arg] || self.solve(arg,local);
+        if (context[arg]) return context[arg];
+        if (arg[0] === '_') return self.solve(arg.slice(1),local,true);
+        else return self.solve(arg,local);
       });
 
     // Wait for all arguments to be resolved before executing the function
