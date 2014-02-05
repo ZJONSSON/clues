@@ -47,7 +47,7 @@
       if (self.facts[ref] !== undefined) return promise.fulfilled(self.facts[ref]);
       // If we can't find any logic for the reference at this point, we return an error
       if (self.logic[ref] === undefined)
-        return (optional) ? promise.fulfilled(null) : promise.rejected({ref:ref,err:'not defined'});
+        return (optional) ? promise.fulfilled(undefined) : promise.rejected({ref:ref,err:'not defined'});
       // If the logic reference is not a function, we simply return the value
       if (typeof self.logic[ref] !== 'function' ) return promise.fulfilled(self.logic[ref]);
       // Schedule an update where we overwrite fact table with the result
@@ -102,6 +102,7 @@
 
     return p.promise
       .then(null,function(e) {
+        if (optional) return undefined;
         // Add a reference, if it doesn't exist
         if (!e.err) e= {ref:ref,err:e};
         throw e;
