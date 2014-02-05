@@ -17,7 +17,7 @@ vows.describe("optional argument").addBatch({
         });
     },
     "should return null" : function(d) {
-      assert.equal(d,null);
+      assert.deepEqual(d,undefined);
     }
   },
   "calculation with internal default" : {
@@ -44,6 +44,19 @@ vows.describe("optional argument").addBatch({
     },
     "should return correct value" : function(d) {
       assert.equal(d,420);
+    }
+  },
+  "optional that results in an error" : {
+    topic : function() {
+      var self = this;
+      clues(logic.simple)
+        .solve(function(A,_F) {
+          self.callback(undefined,{A:A,F:_F});
+        }).then(null,self.callback);
+    },
+    "should be undefined" : function(d) {
+      assert.deepEqual(d.F,undefined);
+      assert.equal(d.A,42);
     }
   }
 

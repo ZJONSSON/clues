@@ -22,6 +22,9 @@ module.exports.simple = {
       resolve(A* (_U||2) );
     });
   },
+  F : function() {
+    throw "#Custom error";
+  },
   irrelevant : function(resolve) {
     setTimeout(function() {
       resolve("irrelevant");

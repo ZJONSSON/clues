@@ -33,7 +33,7 @@ This schedules an execution of the supplied function.  The argument names of the
 The second argument (optional) allows local variables that will be used, and have priority, against facts and logic.  The is to provide the flexibility to have functions respond to request specific variables, such as a response stream or to override any previously determined facts.  Please note however, that locals should really be used at end-points in logic, to ensure that locals do not contaminate derived facts.
 
 ##### Optional facts
-By default all arguments have to be resolved for a function to be evaluated.  Any fact (i.e. argument name) can however be made optional by prefixing it with an underscore.  Any unresolved fact that is optional will show as `null` inside the function.  The following function will fail if fact `A` can not be resolved, but return `[fact_A,null]` if fact A exists but fact B can not be resolved:
+By default all arguments have to be resolved for a function to be evaluated.  Any fact (i.e. argument name) can however be made optional by prefixing it with an underscore.  Any unresolved fact that is optional (either missing or an error) will show as `undefined` inside the function.  The following function will fail if fact `A` can not be resolved, but return `[fact_A,null]` if fact A exists but fact B can not be resolved (or returns an error):
 
 ```js
 clues.solve(A,_B) {
