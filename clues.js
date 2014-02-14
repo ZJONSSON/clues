@@ -14,7 +14,7 @@
     self.clues = clues;
   }
 
-  clues.version = "1.1.2";
+  clues.version = "1.1.3";
 
   function clues(logic,facts) {
     if (!(this instanceof clues))
