@@ -14,7 +14,7 @@
     self.clues = clues;
   }
 
-  clues.version = "1.0.1";
+  clues.version = "1.1.2";
 
   function clues(logic,facts) {
     if (!(this instanceof clues))
@@ -44,7 +44,11 @@
       // Local variables supercede anything else
       if (local[ref]) return promise.fulfilled(local[ref]);
       // If we have already determined the fact we simply return it
-      if (self.facts[ref] !== undefined) return promise.fulfilled(self.facts[ref]);
+      if (self.facts[ref] !== undefined) return promise.fulfilled(self.facts[ref])
+         .then(null,function(e) {
+          if (optional) return undefined;
+          else throw e;
+        });
       // If we can't find any logic for the reference at this point, we return an error
       if (self.logic[ref] === undefined)
         return (optional) ? promise.fulfilled(undefined) : promise.rejected({ref:ref,err:'not defined'});
