@@ -1,62 +1,32 @@
-/*jshint node:true */
-var clues=require("../clues"),
-    assert = require("assert"),
-    vows=require("vows"),
-    logic = require("./logic");
+var clues = require("../clues"),
+    assert = require("assert");
 
-vows.describe("complex tree").addBatch({
-  "" : {
-    topic : function() {
-      var self = this;
-      C1 = clues(logic.complex);
-      C1.solve("MTOP").then(function(d) { self.callback(null,d);});
-    },
-    "is resolved to the top value" : function(d) {
-        assert.equal(d,100);
-      },
-    "" : {
-      topic : function() {
-        var self=this;
-        C1.solve(function(facts) {
-          self.callback(null,facts);
-        });
-      },
-      "fact table is correct" : function(d) {
-        assert.isNumber(d.M1);
-        assert.isNumber(d.M2);
-        assert.isNumber(d.M3);
-        assert.isNumber(d.M4);
-        assert.isNumber(d.MTOP);
-      },
-      /**/
-      /*
-      "solve.set()" : {
-        topic : function() {
-          C1.set("M1",20);
-          return true;
-        },
-        "changes the respective value" : function(d) {
-          assert.equal(C1.facts.M1,20);
-        },
-        "and sets children of that reference to undefined" : function(d) {
-          assert.isUndefined(C1.facts.M3);
-          assert.isUndefined(C1.facts.MTOP);
-        },
-        "without touching the other facts" : function(d) {
-          assert.isNumber(C1.facts.M2);
-          assert.isNumber(C1.facts.M4);
-        },
-        "... subsequent solve" : {
-          topic : function() {
-            C1.solve("MTOP",this.callback);
-          },
-          "returns an updated value based on the new fact" : function(d) {
-            assert.equal(d,110);
-          }
-        }
-      }
-      */
-    }
-  }
-})
-.export(module);
+describe('complex tree',function() {
+
+  var logic = {
+    M1 : function(Promise) { return Promise.delay(10,100); },
+    M2 : function(Promise) { return Promise.delay(300,20); },
+    M3 : function(M1,M2) { return M1+M2; },
+    M4 : function(Promise) { return Promise.delay(70,150); },
+    MTOP : function(M3,M4) { return M3+M4; }
+  };
+
+  var c = clues(logic);
+
+  it('should resolve to the top',function() {
+    return c.solve('MTOP')
+      .then(function(d) {
+        assert.equal(d,380);
+      });
+  });
+
+  it('should update the fact table',function() {
+    return c.solve(function(facts) {
+      assert.equal(facts.M1.inspect().value(),10);
+      assert.equal(facts.M2.inspect().value(),300);
+      assert.equal(facts.M3.inspect().value(),310);
+      assert.equal(facts.M4.inspect().value(),70);
+      assert.equal(facts.MTOP.inspect().value(),380);
+    });
+  });
+});

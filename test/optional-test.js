@@ -1,65 +1,78 @@
-/*jshint node:true */
-var clues=require("../clues"),
-    assert = require("assert"),
-    vows=require("vows"),
-    logic = require("./logic");
+var clues = require("../clues"),
+    assert = require("assert");
 
-var S1 = clues(logic.simple);
 
-vows.describe("optional argument").addBatch({
-  "not supplied" : {
-    topic : function() {
-      var self = this;
-      clues(logic.simple)
-        .solve('D')
+describe('optional argument',function() {
+
+  var logic = {
+    data : function(Promise) { return Promise.delay(5,1000); },
+    passthrough : function(_optional) { return _optional; },
+    internalize : function(data,_optional) { return data + (_optional || 2); },
+    optional_data : function(_data) { return _data; }
+  };
+
+  describe('not supplied',function() {
+    it('should return undefined',function() {
+      return clues(logic)
+        .solve('passthrough')
         .then(function(d) {
-          self.callback(undefined,d);
+          assert.deepEqual(d,undefined);
         });
-    },
-    "should return null" : function(d) {
-      assert.deepEqual(d,undefined);
-    }
-  },
-  "calculation with internal default" : {
-    topic : function() {
-      var self = this;
-      clues(logic.simple)
-        .solve('E')
+    });
+  });
+
+  describe('with internal default',function() {
+    it('should use the internal default',function() {
+      return clues(logic)
+        .solve('internalize')
         .then(function(d) {
-          self.callback(undefined,d);
+          assert.equal(d,7);
         });
-    },
-    "should return correct value" : function(d) {
-      assert.equal(d,84);
-    }
-  },
-  "calculation with optional defined" : {
-    topic : function() {
-      var self = this;
-      clues(logic.simple,{U:10})
-        .solve('E')
+
+    });
+  });
+
+  describe('with a set fact',function() {
+    it('should return the right value',function() {
+      return clues(logic,{optional:10})
+        .solve('passthrough')
         .then(function(d) {
-          self.callback(undefined,d);
+          assert.equal(d,10);
         });
-    },
-    "should return correct value" : function(d) {
-      assert.equal(d,420);
-    }
-  },
-  "optional that results in an error" : {
-    topic : function() {
-      var self = this;
-      clues(logic.simple)
-        .solve(function(A,_F) {
-          self.callback(undefined,{A:A,F:_F});
-        }).then(null,self.callback);
-    },
-    "should be undefined" : function(d) {
-      assert.deepEqual(d.F,undefined);
-      assert.equal(d.A,42);
-    }
-  }
+    });
+  });
+
+  describe('with a working function',function() {
+    it('should return the function results',function() {
+      return clues(logic)
+        .solve('optional_data')
+        .then(function(d) {
+          assert.equal(d,5);
+        });
+    });
+  });
+
+  describe('as an error',function() {
+    var c = clues({
+      error : function() { throw "#Error"; },
+      optional : function(_error) { return _error; },
+      regular : function(_error) { return _error; }
+    });
+
+    it('should return undefined, if optional',function() {
+      c.solve('optional')
+        .then(function(d) {
+          assert.equal(d,undefined);
+        });
+    });
+
+    it('should raise error if non-optonal',function() {
+      c.solve('regular')
+        .then(null,function(e) {
+          assert.equal(d.err,"#Error");
+        });
+    });
+  });
+});
 
 
-})
-.export(module);
