@@ -5,26 +5,26 @@ describe('cancellation',function() {
   var cancel = {};
 
   var logic = {
-    M1 : function(Promise) {
-      return Promise
+    M1 : function() {
+      return this.Promise
         .delay(10,130)
         .cancellable()
-        .catch(Promise.CancellationError,function() {
+        .catch(this.Promise.CancellationError,function() {
           cancel.M1 = true;
         });
     },
-    M2 : function(Promise) {
-      return Promise
+    M2 : function() {
+      return this.Promise
         .delay(50,170)
         .cancellable()
-        .catch(Promise.CancellationError,function() {
+        .catch(this.Promise.CancellationError,function() {
           cancel.M2 = true;
         });
     },
-    M3 : function(Promise) {
-      return Promise
+    M3 : function() {
+      return this.Promise
         .delay(10,10)
-         .catch(Promise.CancellationError,function() {
+         .catch(this.Promise.CancellationError,function() {
           cancel.M3 = true;
         });
     },

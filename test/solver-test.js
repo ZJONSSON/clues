@@ -18,9 +18,10 @@ describe('solver',function() {
       });
   });
 
-  if('should work when injected',function() {
-    return c.solve(function(B,solver) {
-      return solver('A');
+  it('should work with injected self',function() {
+    return c.solve(function(B,self) {
+      return this.Promise.rejected(true)
+        .then(null,self.solver('A'));
     })
     .then(function(d) {
       assert.equal(d,42);

@@ -5,7 +5,7 @@ var clues = require("../clues"),
 describe('optional argument',function() {
 
   var logic = {
-    data : function(Promise) { return Promise.delay(5,1000); },
+    data : function() { return this.Promise.delay(5,1000); },
     passthrough : function(_optional) { return _optional; },
     internalize : function(data,_optional) { return data + (_optional || 2); },
     optional_data : function(_data) { return _data; }

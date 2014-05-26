@@ -3,7 +3,7 @@ var clues = require("../clues"),
 
 describe('facts',function() {
   var c = clues({
-    response : function(Promise) { return Promise.delay(42,500);},
+    response : function() { return this.Promise.delay(42,500);},
     other : function() { return 5; }
   });
 

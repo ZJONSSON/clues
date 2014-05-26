@@ -18,12 +18,6 @@ describe('context',function() {
     });
   });
 
-  it('should inject solve',function() {
-    return c.solve(function(a,solve) {
-      assert.deepEqual(solve,c.solve);
-    });
-  });
-
   it('should inject local',function() {
     var local = {a: 1, b: 2};
     return c.solve('l',local)

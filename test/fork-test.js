@@ -4,7 +4,7 @@ var clues = require("../clues"),
 
 describe('fork',function() {
   var logic = {
-    A : function(Promise) { return Promise.delay(42,500);},
+    A : function() { return this.Promise.delay(42,500);},
     B : 10,
     C : function(A,B) { return A + B; }
   };
