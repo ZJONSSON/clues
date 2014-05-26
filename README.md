@@ -133,7 +133,9 @@ locic.transactions = function(userid,Promise) {
 ```
 
 ## Hints and tips
-* Check the test folder for examples
+* Check the test folder for usage examples
+
+* Helper modules are provided in the util directory.  Use `app.use(require('clues/util/express-clues'))(api)` to provide access to clues through an express route.
 
 * By defining logic object as the `Window` object, all global functions and variables are made available.
 
