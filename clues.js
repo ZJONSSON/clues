@@ -86,8 +86,8 @@
       });
   };
 
-  clues.prototype.solver = function(d,e) {
-    return this.solve.bind(this,d,e);
+  clues.prototype.solver = function(d,e,f) {
+    return this.solve.bind(this,d,e,f);
   };
 
   clues.prototype.fork = function(update) {
