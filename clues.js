@@ -33,7 +33,7 @@
 
   clues.version = "2.0.0";
 
-  clues.prototype.solve = function(fn,local) {
+  clues.prototype.solve = function(fn,local,caller) {
     var self = this, ref;
 
     if (typeof fn !== "function") {
@@ -47,7 +47,7 @@
         if (local && local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
         else if (self[ref] !== undefined) return self.Promise.fulfilled(self[ref]);
         else if (ref === 'local') return self.Promise.fulfilled(local);
-        else return self.Promise.rejected({ref: ref, message: ref+' not defined', name: 'Undefined'});
+        else return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
       // If the logic reference is not a function, we simply return the value
@@ -60,7 +60,7 @@
         var optional = arg[0] === '_';
         if (optional) arg = arg.slice(1);
 
-        return self.solve(arg,local)
+        return self.solve(arg,local,ref)
           .then(null,function(e) {
             if (optional) return undefined;
             else throw e;
@@ -80,8 +80,8 @@
           return args.forEach(function(arg) { arg.cancel(); });
         if (typeof e !== 'object')
           e = { message : e};
-        if (!e.ref)
-          e.ref = ref;
+        e.ref = e.ref || ref;
+        e.caller = e.caller || caller || '';
         throw e;
       });
   };

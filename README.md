@@ -61,7 +61,7 @@ Please keep in mind that any variable that is referred to as optional will look 
 The solve function always returns a promise.  As the main operations take place in the user supplied function, the subsequent promise might be of less interest, except for error handling.
 
 ##### Errors
-Errors will include a `ref` property showing which logic function (by name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref` the logic function.  This error handling will not force errors into Error Objects, which can be useful to distinguish between javascript errors (which are Error Object with `.stack`) and customer 'string' error messages (which do not have `.stack`).
+Errors will include a `ref` property showing which logic function (by name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref` the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  This error handling will not force errors into Error Objects, which can be useful to distinguish between javascript errors (which are Error Object with `.stack`) and customer 'string' error messages (which do not have `.stack`).
 
 Example: if any string errors should be passed on to the client, but javascript error messages should be masked you could for example do:
 ```
