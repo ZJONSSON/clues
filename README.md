@@ -41,7 +41,7 @@ Key value dictionary of facts.  Facts can be user supplied, determined by logic 
 ##### Supplied Function
 This schedules an execution of the supplied function.  The argument names of the function will be parsed and matched to facts and logic (and `local` and `self`) within the instance object by argument name.  Any arguments that point to neither a fact nor logic (nor locals or properties of the clues object itself) will result in an error (unless prefixed with an underscore, making it optional).  The supplied function is essentially a callback function that is executed when the inputs are known.  This function returns a promise on its results.
 
-Properties of the clues object can be injected into the function arguments when referenced by name. Those include: `self`, `Promise`, `solve`, `solver`, `fork` and are all linked to the specific `clues`-object being used.   This properties are also available through the `this` context supplied to the logic function.
+Properties of the clues object can be injected into the function arguments when referenced by name. Those include: `self`, `Promise`, `solve`, `solver`, `fork`, `local` and are all linked to the specific `clues`-object being used.   This properties are also available through the `this` context supplied to the logic function.
 
 ##### Local Variables
 The second argument (optional) allows local variables that will be used, and have priority, against facts and logic.  The is to provide the flexibility to have functions respond to request specific variables, such as a response stream or to override any previously determined facts.  Please note however, that locals should really be used at end-points in logic, to ensure that locals do not contaminate derived facts.

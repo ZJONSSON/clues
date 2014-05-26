@@ -3,7 +3,7 @@ var clues = require("../clues"),
 
 describe('context',function() {
   var f = {a: 1, b: 2},
-      l = {c: 3, d: 4},
+      l = {c: 3, d: 4, l : function(local) { return local; }},
       c = clues(l,f);
 
   it('should inject self',function() {
@@ -22,6 +22,14 @@ describe('context',function() {
     return c.solve(function(a,solve) {
       assert.deepEqual(solve,c.solve);
     });
+  });
+
+  it('should inject local',function() {
+    var local = {a: 1, b: 2};
+    return c.solve('l',local)
+      .then(function(d) {
+        assert.deepEqual(d,local);
+      });
   });
 
   it('should inject local variable',function() {
