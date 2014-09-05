@@ -11,20 +11,20 @@ function stringifyError(e) {
   };
 }
 
-function multi(data,self) {
-  var res = {};
+function multi(data,self,res) {
+  res.write('{\n\t"multi":true\t\n');
   data = data.split(',');
-  return Promise.all(data
-    .map(function(ref) {
+  return Promise.all(
+    data.map(function(ref) {
       return self.solve(ref)
         .catch(stringifyError)
         .then(function(d) {
-          res[ref] = d;
+          res.write(',  "'+ref+'" : '+JSON.stringify(d)+'\t\n');
         });
     })
   )
-  .then(function() {
-    return res;
+  .then(function(d) {
+    res.end('}');
   });
 }
 
