@@ -32,7 +32,8 @@ function multi(data,self,res,req) {
 
   return Promise.all(data)
     .then(function(d) {
-      res.end('}');
+      res.write('}');
+      res.end();
     });
 }
 
