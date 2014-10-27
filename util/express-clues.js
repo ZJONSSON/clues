@@ -11,21 +11,28 @@ function stringifyError(e) {
   };
 }
 
-function multi(data,self,res) {
+function multi(data,self,res,req) {
   res.write('{\n\t"multi":true\t\n');
-  data = data.split(',');
-  return Promise.all(
-    data.map(function(ref) {
+
+  data = data.split(',')
+    .map(function(ref) {
       return self.solve(ref)
         .catch(stringifyError)
         .then(function(d) {
           res.write(',  "'+ref+'" : '+JSON.stringify(d)+'\t\n');
         });
-    })
-  )
-  .then(function(d) {
-    res.end('}');
+    });
+
+  req.on('close',function() {
+    data.forEach(function(d) {
+      d.cancel();
+    });
   });
+  
+  return Promise.all(data)
+    .then(function(d) {
+      res.end('}');
+    });
 }
 
 function help(self) {
