@@ -12,6 +12,7 @@ function stringifyError(e) {
 }
 
 function multi(data,self,res,req) {
+  res.setHeader('content-type','application/ocetstream');
   res.write('{\n\t"multi":true\t\n');
 
   data = data.split(',')
@@ -28,7 +29,7 @@ function multi(data,self,res,req) {
       d.cancel();
     });
   });
-  
+
   return Promise.all(data)
     .then(function(d) {
       res.end('}');
