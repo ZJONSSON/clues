@@ -45,9 +45,11 @@
 
       // If we can't find any logic, we check self and local before returning an error
       if (self.logic[ref] === undefined) {
-        if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
-        else if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
-        else return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
+        if (caller !== '__user__') {
+          if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
+          if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
+        }
+        return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
       // If the logic reference is not a function, we simply return the value
