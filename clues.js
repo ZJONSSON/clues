@@ -47,7 +47,6 @@
       if (self.logic[ref] === undefined) {
         if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
         else if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
-        else if (ref === 'local') return self.Promise.fulfilled(local);
         else return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
