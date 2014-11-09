@@ -23,11 +23,12 @@
     return fn.__args__;
   }
 
-  function clues(logic,facts) {
+  function clues(logic,facts,options) {
     if (!(this instanceof clues))
       return new clues(logic,facts);
     this.logic = logic || (typeof window === 'undefined' ? {} : window);
     this.facts = facts || {};
+    this.options = options || {};
     this.self = this;
   }
 
@@ -49,6 +50,7 @@
           if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
           if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
         }
+        if (typeof(self.options.fallback) === 'function') return self.facts[ref] = self.options.fallback.call(this,ref,local,caller);
         return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 

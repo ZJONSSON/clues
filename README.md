@@ -22,12 +22,14 @@ A clues object can be long-running, building up/memoizing all the facts as requi
 
 ## API Reference
 
-### `clues([logic],[facts])`
+### `clues([logic],[facts],[options])`
 Creates a new clues object based on a particular logic (set of functions and values by reference) and facts (associative arrays of known values).  Logic and fact objects can be defined/modified later as they are public variables of the clues object.
 
 The logic object is used as read-only (i.e. any results will **only** alter fact object, not the logic object), allowing the same logic definition to be reused for multiple clues objects (each with a separate fact space).  Clues object can furthermore be chained by requiring any logic function of one clues object to use .exec() function of another.
 
 If no logic is provided to clues in a browser environment, it will use the global object (Window)
+
+An optional fallback function can be defined in the options object.  This function will be called whenever a reference can not be found in current fact/logic space and must return a promise.
 
 ### `clues.logic = {}`
 Key/value dictionary of logic functions and/or values.   Functions in the logic object must only contain arguments names that correspond to either facts or as other logic functions/values.    Each logic function must either return a value or a promise.
