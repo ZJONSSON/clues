@@ -22,11 +22,11 @@ describe('complex tree',function() {
 
   it('should update the fact table',function() {
     return c.solve(function(facts) {
-      assert.equal(facts.M1.inspect().value(),10);
-      assert.equal(facts.M2.inspect().value(),300);
-      assert.equal(facts.M3.inspect().value(),310);
-      assert.equal(facts.M4.inspect().value(),70);
-      assert.equal(facts.MTOP.inspect().value(),380);
+      assert.equal(facts.M1.value(),10);
+      assert.equal(facts.M2.value(),300);
+      assert.equal(facts.M3.value(),310);
+      assert.equal(facts.M4.value(),70);
+      assert.equal(facts.MTOP.value(),380);
     });
   });
 });

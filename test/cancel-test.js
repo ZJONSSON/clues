@@ -55,7 +55,7 @@ describe('cancellation',function() {
     return res.delay()
       .then(function() {
         assert.equal(cancel.M3,undefined);
-        assert.equal(c.facts.M3.inspect().value(),10);
+        assert.equal(c.facts.M3.value(),10);
       });
   });
     

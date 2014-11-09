@@ -43,7 +43,7 @@ describe('error',function() {
 
       it ('should update the fact table',function() {
         return c.solve(function(facts) {
-          var e = facts.ERR.inspect().error();
+          var e = facts.ERR.reason();
           assert.equal(e.ref,'ERR');
           assert.equal(e.message,'Could not process');
         });
