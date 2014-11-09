@@ -3,7 +3,7 @@ var clues = require("../clues"),
 
 describe('context',function() {
   var f = {a: 1, b: 2},
-      l = {c: 3, d: 4, l : function(local) { return local; }},
+      l = {c: 3, d: 4, l : function(a,b) { return {a: a,b: b}; }},
       c = clues(l,f);
 
   it('should inject self',function() {
