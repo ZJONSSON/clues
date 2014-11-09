@@ -1,66 +1,67 @@
 var clues = require('../clues'),
     Promise = require('bluebird');
 
-function stringifyError(e) {
-  return {
-    message : e.message,
-    ref : e.ref,
-    caller : e.caller,
-    stack : e.stack,
-    error : true
-  };
-}
-
-function multi(data,self,res,req) {
-  res.setHeader('content-type','application/ocetstream');
-  res.write('{\n\t"multi":true\t\n');
-
-  data = data.split(',')
-    .map(function(ref) {
-      return self.solve(ref)
-        .catch(stringifyError)
-        .then(function(d) {
-          res.write(',  "'+ref+'" : '+JSON.stringify(d)+'\t\n');
-        });
-    });
-
-  req.on('close',function() {
-    data.forEach(function(d) {
-      d.cancel();
-    });
-  });
-
-  return Promise.all(data)
-    .then(function(d) {
-      res.write('}');
-      res.end();
-    });
-}
-
-function help(self) {
-  return Object.keys(self.logic);
-}
-
-module.exports = function(api) {
+module.exports = function(api,options) {
   api = api || {};
-  api.multi = multi;
-  api.help = help;
+  options = options || {};
+  
+  function stringifyError(e) {
+    var message = {
+      message : (!options.debug && e.stack) ? 'Internal Error' : e.message,
+      ref : e.ref,
+      error : true
+    };
+
+    if (options.debug) {
+      message.stack = e.stack;
+      message.caller = e.caller;
+    }
+
+    return message;
+  }
 
   return function(req,res) {
-    res.set('Content-Type','application/json');
-    clues(api,req.query)
-      .solve(req.param("fn"),{req:req,res:res})
-      .catch(stringifyError)
+    req.body = req.body || {};
+    res.set('Transfer-Encoding','chunked');
+    res.set('Content-Type', 'application/json; charset=UTF-8');
+    res.set('Cache-Control', 'no-cache, no-store, max-age=0');
+    res.write('{                                     \t\n\n');
+    if (typeof(res.flush) == 'function') res.flush();
+
+    Object.keys(req.query || {})
+      .forEach(function(key) {
+        req.body[key] = req.query[key];
+      });
+    
+    if (options.safe) {
+      Object.keys(req.body).forEach(function(key) {
+        if (api[key]) delete req.body[key];
+      });
+    }
+
+    var c = clues(api,req.body);
+
+    var data = req.param("fn")
+      .split(',')
+      .map(function(ref) {
+        return c.solve(ref,{res:res,req:req},'__user__')
+          .catch(stringifyError)
+          .then(function(d) {
+            res.write('  "'+ref+'" : '+JSON.stringify(d)+',\t\n');
+            if (typeof(res.flush) == 'function') res.flush();
+          });
+      });
+
+    req.on('close',function() {
+      data.forEach(function(d) {
+        d.cancel();
+      });
+    });
+
+    return Promise.all(data)
       .then(function(d) {
-        if (d && !d.error && req.param('select')) {
-          req.param('select')
-            .split('.')
-            .forEach(function(key) {
-              d = d && d[key];
-            });
-        }
-        
-        res.end(JSON.stringify(d,null,2));
+        res.write('  "__end__" : true\t\n}');
+        res.end();
       });
   };
 };
