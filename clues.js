@@ -32,7 +32,7 @@
     this.self = this;
   }
 
-  clues.version = "2.2.0";
+  clues.version = "2.2.1";
 
   clues.prototype.solve = function(fn,local,caller) {
     var self = this, ref, args;
