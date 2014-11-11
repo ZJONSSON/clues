@@ -32,13 +32,13 @@
     this.self = this;
   }
 
-  clues.version = "2.1.0";
+  clues.version = "2.2.0";
 
   clues.prototype.solve = function(fn,local,caller) {
-    var self = this, ref;
+    var self = this, ref, args;
     local = local || {};
 
-    if (typeof fn !== "function") {
+    if (typeof fn === "string") {
       ref = fn;
 
       // If we have already determined the fact we simply return it
@@ -54,12 +54,19 @@
         return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
-      // If the logic reference is not a function, we simply return the value
-      if (typeof self.logic[ref] !== 'function' ) return self.Promise.fulfilled(self.logic[ref]);
       fn = self.logic[ref];
     }
+    
+    // Support an array with argument names in front and the function as last element
+    if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
+      args = fn.slice(0,fn.length-1);
+      fn = fn[fn.length-1];
+    }
 
-    var args = matchArgs(fn)
+    // If the logic reference is not a function, we simply return the value
+    if (typeof fn !== 'function') return self.Promise.fulfilled(fn);
+
+    args = (args || matchArgs(fn))
       .map(function(arg) {
         var optional = arg[0] === '_';
         if (optional) arg = arg.slice(1);

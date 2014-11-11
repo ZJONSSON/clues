@@ -1,9 +1,8 @@
-##Breaking changes in version 2.0:
+#### Breaking changes in version 2.0:
 * [Bluebird](https://www.npmjs.org/package/bluebird) is now the core promises library and the latest [Mocha](https://www.npmjs.org/package/mocha) is used for testing
 * Logic functions have to return either value or promise, the `resolve` and `reject` methods have been removed
 * Text errors are now returned as the `message` property of the thrown object, not as `err`
 * Methods `all`, `as` and `wrapper` removed and methods `solver` and `fork` added for better flow control.
-
 
 # clues.js
 [Promises](https://github.com/promises-aplus) provide a very effective mechanism to construct complex interactions between asynchronous functions.  Most promise libraries focus on the promise object itself, and leave the actual structuring of complex logic up to the user.
@@ -19,6 +18,17 @@ Each logic function will only execute when it's input arguments values are known
 Each logic function will execute only once (if at all) in an clues object. Multiple requests for the same logic will simply attach to the initial promise, and once the output is known, any further requests will simply return the resolved `fact` (or an error, respectively)
 
 A clues object can be long-running, building up/memoizing all the facts as required or a quick temporary scaffold that is discarded once a particular answer has been recursively solved from given inputs.
+
+##### Minification
+
+Logic function can be defined in array form, where the function itself is placed in the last element, with the other elements representing argument names required for the function.  This allows for minification of code that uses clues.js.
+
+In the following example, the local variable `a` stands for the `input1` fact and `b` is the `input2` fact
+```
+api.test = ['input1','input2',function(a,b) {
+  ... function body ...
+}]
+```
 
 ## API Reference
 
