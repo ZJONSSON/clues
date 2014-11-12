@@ -56,7 +56,7 @@
               d = d[key];
               if (d && d.solve)
                 return self.facts[ref] = d.solve(keys.join('.'),local,caller,fullref);
-              if (!d) return self.Promise.rejected({ref: key, fullref : fullref, caller: caller, message: ref+' not defined', name: 'Undefined'});
+              if (d === undefined) return self.Promise.rejected({ref: key, fullref : fullref, caller: caller, message: ref+' not defined', name: 'Undefined'});
             }
             return d;
           });
