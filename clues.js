@@ -32,9 +32,9 @@
     this.self = this;
   }
 
-  clues.version = "2.2.1";
+  clues.version = "2.5.0";
 
-  clues.prototype.solve = function(fn,local,caller) {
+  clues.prototype.solve = function(fn,local,caller,fullref) {
     var self = this, ref, args;
     local = local || {};
 
@@ -44,6 +44,24 @@
       // If we have already determined the fact we simply return it
       if (self.facts[ref] !== undefined) return self.Promise.fulfilled(self.facts[ref]);
 
+      // If the reference contains dots we solve recursively
+      if (ref.indexOf('.') > -1) {
+        var keys = ref.split('.'),
+            key = keys.shift();
+        fullref = fullref ? fullref+'.'+key : key;
+        return self.solve(key,local,caller,fullref)
+          .then(function(d) {
+            while (key = keys.shift()) {
+              fullref += '.'+key;
+              d = d[key];
+              if (d && d.solve)
+                return self.facts[ref] = d.solve(keys.join('.'),local,caller,fullref);
+              if (!d) return self.Promise.rejected({ref: key, fullref : fullref, caller: caller, message: ref+' not defined', name: 'Undefined'});
+            }
+            return d;
+          });
+      }
+
       // If we can't find any logic, we check self and local before returning an error
       if (self.logic[ref] === undefined) {
         if (caller !== '__user__') {
@@ -51,7 +69,7 @@
           if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
         }
         if (typeof(self.options.fallback) === 'function') return self.facts[ref] = self.options.fallback.call(this,ref,local,caller);
-        return self.Promise.rejected({ref: ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
+        return self.Promise.rejected({ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
       fn = self.logic[ref];
@@ -92,6 +110,7 @@
         if (typeof e !== 'object')
           e = { message : e};
         e.ref = e.ref || ref;
+        e.fullref = e.fullref || fullref;
         e.caller = e.caller || caller || '';
         throw e;
       });

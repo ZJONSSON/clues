@@ -30,6 +30,9 @@ api.test = ['input1','input2',function(a,b) {
 }]
 ```
 
+##### Nesting
+Logic trees can contain clues objects that provide a separate fact/logic space for any sub-components.  This allows for example person1 and person2 to have identical logic trees without sharing the same facts.   Trees can be traversed using dot notation, either when solving by string or using the minification definition above.   See `recursive-test.js` in the test directory for examples.  (todo: more docs)
+
 ## API Reference
 
 ### `clues([logic],[facts],[options])`

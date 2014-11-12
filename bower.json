@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "2.2.1",
+  "version": "2.5.0",
   "main": "clues.js",
   "scripts": [
     "clues.js"
