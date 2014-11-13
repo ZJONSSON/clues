@@ -24,13 +24,7 @@ describe('logic value',function() {
           assert.equal(d,499);
         });
     });
-
-    it('should not update the fact table',function() {
-      return c.solve(function(facts) {
-          assert.equal(facts.dflt,undefined);
-        });
-      });
-    });
+  });
 
   describe('with an overriding fact',function() {
     it('should return the fact, not the dflt value',function() {

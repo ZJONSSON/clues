@@ -82,7 +82,7 @@
     }
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function') return self.Promise.fulfilled(fn);
+    if (typeof fn !== 'function') return self.facts[ref] = self.Promise.fulfilled(fn);
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
