@@ -31,7 +31,7 @@ api.test = ['input1','input2',function(a,b) {
 ```
 
 ##### Nesting
-Logic trees can contain clues objects that provide a separate fact/logic space for any sub-components.  This allows for example person1 and person2 to have identical logic trees without sharing the same facts.   Trees can be traversed using dot notation, either when solving by string or using the minification definition above.   See `recursive-test.js` in the test directory for examples.  (todo: more docs)
+Logic trees can contain clues objects that provide a separate fact/logic space for any sub-components.  This allows for example person1 and person2 to have identical logic trees without sharing the same facts.   Trees can be traversed using dot notation, either when solving by string or using the minification definition above.   See `recursive-test.js` in the test directory for examples.  (todo: more docs).  Nesting can be turned off by defining the `ignoreDots` option when the clues object is created.
 
 ## API Reference
 
@@ -42,7 +42,7 @@ The logic object is used as read-only (i.e. any results will **only** alter fact
 
 If no logic is provided to clues in a browser environment, it will use the global object (Window)
 
-An optional fallback function can be defined in the options object.  This function will be called whenever a reference can not be found in current fact/logic space and must return a promise.
+An optional `fallback` function can be defined in the options object.  This function will be called whenever a reference can not be found in current fact/logic space and must return a promise.  To turn off nesting (see below) define the `ignoreDots` option as `true`.
 
 ### `clues.logic = {}`
 Key/value dictionary of logic functions and/or values.   Functions in the logic object must only contain arguments names that correspond to either facts or as other logic functions/values.    Each logic function must either return a value or a promise.

@@ -45,7 +45,7 @@
       if (self.facts[ref] !== undefined) return self.Promise.fulfilled(self.facts[ref]);
 
       // If the reference contains dots we solve recursively
-      if (ref.indexOf('.') > -1) {
+      if (!self.options.ignoreDots && ref.indexOf('.') > -1) {
         var keys = ref.split('.'), i=-1;
         
         return function next(d) {
@@ -53,7 +53,7 @@
           if (!key) return self.Promise.fulfilled(d);
           fullref = fullref ? fullref+'.'+key : key;
           if (typeof d !== 'object') throw {ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'};
-          if (!d.solve) d = clues(d);
+          if (!d.solve) d = clues(d,{},self.options);
           return d.facts[keys.slice(i).join('.')] = d.solve(key,local,caller,fullref).then(next);
         }(self);
       }
