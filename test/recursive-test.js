@@ -9,7 +9,7 @@ describe('In recursive logic',function() {
     medium : {
       bucket : {
         value : clues.prototype.Promise.delay(10,100)
-      }
+      },
     },
     hard : ['simple.value',function(val) {
       return {
@@ -17,7 +17,13 @@ describe('In recursive logic',function() {
           b : clues({
             c : {
               d : clues({
-                id: val+100
+                id: val+100,
+                e : clues( {
+                    f :12,
+                    g : function(f) {
+                      return 2*f;
+                    }
+                })
               })
             }
           })
@@ -26,25 +32,37 @@ describe('In recursive logic',function() {
     }]
   };
 
+  function noError(e) {
+    throw 'Should not result in an error: '+e.message;
+  }
+
   var c = clues(logic);
 
   it('simple nesting works',function() {
     return c.solve('simple.value')
       .then(function(d) {
         assert.equal(d,2);
-      });
+      },noError);
   });
 
   it('medium nesting works',function() {
-    return c.solve(['medium.bucket.value',function(value) {
+    return c.solve('medium.bucket.value').then(function(value) {
       assert.equal(value,10);
-    }]);
+    },noError);
   });
 
   describe('complex nesting',function() {
     it('works', function() {
-      return c.solve(['hard.a.b.c.d.id',function(value) {
+      return c.solve('hard.a.b.c.d.id').then(function(value) {
         assert.equal(value,102);
+      },noError);
+    });
+
+    it('works when clue repeats twice',function() {
+      return c.solve(['hard.a.b.c.d.e','hard.a.b.c.d.e.f','hard.a.b.c.d.e.g',function(a,b,c) {
+        assert(a.facts,'hard.a.b.c.d.e should be a clues object');
+        assert.equal(b,12);
+        assert.equal(c,24);
       }]);
     });
 

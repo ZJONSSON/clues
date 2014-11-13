@@ -46,20 +46,16 @@
 
       // If the reference contains dots we solve recursively
       if (ref.indexOf('.') > -1) {
-        var keys = ref.split('.'),
-            key = keys.shift();
-        fullref = fullref ? fullref+'.'+key : key;
-        return self.solve(key,local,caller,fullref)
-          .then(function(d) {
-            while (key = keys.shift()) {
-              fullref += '.'+key;
-              d = d[key];
-              if (d && d.solve)
-                return self.facts[ref] = d.solve(keys.join('.'),local,caller,fullref);
-              if (d === undefined) return self.Promise.rejected({ref: key, fullref : fullref, caller: caller, message: ref+' not defined', name: 'Undefined'});
-            }
-            return d;
-          });
+        var keys = ref.split('.'), i=-1;
+        
+        return function next(d) {
+          var key = keys[++i];
+          if (!key) return self.Promise.fulfilled(d);
+          fullref = fullref ? fullref+'.'+key : key;
+          if (typeof d !== 'object') throw {ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'};
+          if (!d.solve) d = clues(d);
+          return d.facts[keys.slice(i).join('.')] = d.solve(key,local,caller,fullref).then(next);
+        }(self);
       }
 
       // If we can't find any logic, we check self and local before returning an error
@@ -74,7 +70,7 @@
 
       fn = self.logic[ref];
     }
-    
+
     // Support an array with argument names in front and the function as last element
     if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
       args = fn.slice(0,fn.length-1);
