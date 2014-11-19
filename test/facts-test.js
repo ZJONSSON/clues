@@ -23,7 +23,7 @@ describe('facts',function() {
     return c.solve('response')
       .then(function(d) {
         var wait = (new Date()) - start;
-        assert.equal(wait <= 5,true,'wait was '+wait);
+        assert.equal(wait <= 20,true,'wait was '+wait);
         assert.equal(d,42);
       });
   });

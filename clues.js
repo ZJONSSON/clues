@@ -125,5 +125,5 @@
     return clues(this.logic,facts);
   };
 
-  clues.prototype.clues = clues;
+  clues.prototype.clues = clues.bind(undefined);
 })(this);
