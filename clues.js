@@ -124,4 +124,6 @@
     });
     return clues(this.logic,facts);
   };
+
+  clues.prototype.clues = clues;
 })(this);
