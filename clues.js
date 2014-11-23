@@ -25,7 +25,7 @@
 
   function clues(logic,facts,options) {
     if (!(this instanceof clues))
-      return new clues(logic,facts);
+      return new clues(logic,facts,options);
     this.logic = logic || (typeof window === 'undefined' ? {} : window);
     this.facts = facts || {};
     this.options = options || {};
@@ -53,7 +53,7 @@
           if (!key) return self.Promise.fulfilled(d);
           fullref = fullref ? fullref+'.'+key : key;
           if (typeof d !== 'object') throw {ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'};
-          if (!d.solve) d = clues(d,{},self.options);
+          if (!d.solve) d = clues(d,{ parent : d.parent ? undefined : self},self.options);
           return d.facts[keys.slice(i).join('.')] = d.solve(key,local,caller,fullref).then(next);
         }(self);
       }
@@ -64,7 +64,7 @@
           if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
           if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
         }
-        if (typeof(self.options.fallback) === 'function') return self.facts[ref] = self.options.fallback.call(this,ref,local,caller);
+        if (typeof(self.options.fallback) === 'function') return self.facts[ref] = self.Promise.fulfilled(self.options.fallback.call(this,ref,local,caller));
         return self.Promise.rejected({ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
       }
 
