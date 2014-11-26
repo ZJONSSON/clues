@@ -122,7 +122,7 @@
     Object.keys(update).forEach(function(key) {
       facts[key] = update[key];
     });
-    return clues(this.logic,facts);
+    return clues(this.logic,facts,this.options);
   };
 
   clues.prototype.clues = clues.bind(undefined);
