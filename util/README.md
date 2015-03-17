@@ -1,16 +1,30 @@
-# express-clues
+A client/server wrapper around `clues.js`, providing client access to clues solving to a browser or node client with local fact/logic space.  
 
-A simple express wrapper around a clues API. The module.exports is a function that returns an express route when given a custom API object as an argument. Results for each API call are returned as a JSON string. The requested function should be specified as fn in the query params.
+### `reptiles-server`
+The server is initialized by providing base logic and optionally some options `function(logic,options)`
 
-Typical usage from a running express server would be as follows:
+Available options are:
+* `safe` : Disregards any input that would otherwise overwrite a logic function with same name
+* `debug` Provide debug information with error messages
 
-app.all('/api/:fn',require('express-clues')(api))
-Two standard functions are added to the API:
+The initialized server is a function that can be placed into `express` paths.  If no arguments are given to the function, the API access is unrestricted, with requested variables (comma-delimited) in the `req.param.fn`.  If a specific array of values is given to the function, it will solve those variables only.  The user must provide all the inputs either as a JSON blob in the body and/or as querystring variables.
 
-multi
+Example:
+```
+express()
+  .use(bodyParser.json())
+  .post('/api/:fn',reptilesServer(api))
+```
 
-The multi function returns multiple solved facts in one function call. The list of required facts should be defined in the data parameter as a comma separated string. An error in any of the required facts will not prevent other facts to be reported.
+### `reptiles-client`
+The client can be loaded in a browser or required into node.js and inherits  `clues.js` .  A client is initialized by `reptile(logic,inputs,options)` and can subsequently be used to solve for facts / render widgets based on data.  The inputs should be a json array of known local facts.  The following options can be specified
+* `url` The default base url for the reptiles-server, by default '/api/'
+* `request` A list of options provided to the request object (if run on node)
+* `delay` The client tries to aggregate multiple request for data into a single request. 
+* `applyFn` An optional function run every time a fact has been resolved
 
-help
+In addition to providing all standard `clues.js` functions, the client also provides the following (browser only):
+* `render(element)`  This function looks at the `data-reptile` attribute and solves for the logic function with the same name.   The logic function can use the argument `element` to gain access to the dom element itself.  If `data-reptile` is comma delimited the client will try to resolve the first value and then moving on to the next if the first resulted in an error, etc.
+* `renderAll(element)` This function will call `render(element)` on all subnodes that have `data-reptile` defined.
 
-Returns a list of the functions defined in the api
+
