@@ -1,20 +1,19 @@
 var clues = require("../clues"),
-    assert = require("assert");
-
+    assert = require("assert"),
+    Promise = require('bluebird');
 
 describe('optional argument',function() {
 
   var logic = {
-    data : function() { return this.Promise.delay(5,1000); },
+    data : function() { return Promise.delay(5,1000); },
     passthrough : function(_optional) { return _optional; },
     internalize : function(data,_optional) { return data + (_optional || 2); },
     optional_data : function(_data) { return _data; }
   };
 
   describe('not supplied',function() {
-    it('should return undefined',function() {
-      return clues(logic)
-        .solve('passthrough')
+    return it('should return undefined',function() {
+      clues(Object.create(logic),'passthrough')
         .then(function(d) {
           assert.deepEqual(d,undefined);
         });
@@ -23,19 +22,16 @@ describe('optional argument',function() {
 
   describe('with internal default',function() {
     it('should use the internal default',function() {
-      return clues(logic)
-        .solve('internalize')
+      return clues(Object.create(logic),'internalize')
         .then(function(d) {
           assert.equal(d,7);
         });
-
     });
   });
 
   describe('with a set fact',function() {
     it('should return the right value',function() {
-      return clues(logic,{optional:10})
-        .solve('passthrough')
+      return clues(Object.create(logic),'passthrough',{optional:10})
         .then(function(d) {
           assert.equal(d,10);
         });
@@ -44,8 +40,7 @@ describe('optional argument',function() {
 
   describe('with a working function',function() {
     it('should return the function results',function() {
-      return clues(logic)
-        .solve('optional_data')
+      return clues(Object.create(logic),'optional_data')
         .then(function(d) {
           assert.equal(d,5);
         });
@@ -53,23 +48,36 @@ describe('optional argument',function() {
   });
 
   describe('as an error',function() {
-    var c = clues({
+    var logic2 = {
       error : function() { throw "#Error"; },
       optional : function(_error) { return _error; },
-      regular : function(_error) { return _error; }
-    });
+      regular : function(error) { return error; },
+      showerror : function(__error) { return __error;}
+    };
 
     it('should return undefined, if optional',function() {
-      c.solve('optional')
+      return clues(Object.create(logic2),'optional')
         .then(function(d) {
           assert.equal(d,undefined);
         });
     });
 
     it('should raise error if non-optonal',function() {
-      c.solve('regular')
-        .then(null,function(e) {
-          assert.equal(d.err,"#Error");
+      return clues(Object.create(logic2),'regular')
+        .then(function(d) {
+          throw 'Should error';
+        },function(e) {
+          assert.equal(e.message,"#Error");
+        });
+    });
+
+    it('should return the error as an object when prefix is two underscores',function() {
+      return clues(Object.create(logic2),'showerror')
+        .then(function(e) {
+          assert.equal(e.error,true);
+          assert.equal(e.message,'#Error');
+          assert.equal(e.fullref,'showerror.error');
+          assert.equal(e.ref,'error');
         });
     });
   });

@@ -1,10 +1,8 @@
-#### Breaking changes in version 2.0:
-* [Bluebird](https://www.npmjs.org/package/bluebird) is now the core promises library and the latest [Mocha](https://www.npmjs.org/package/mocha) is used for testing
-* Logic functions have to return either a value or promise, the `resolve` and `reject` methods have been removed
-* Text errors are now returned as the `message` property of the thrown object, not as `err`
-* Methods `all`, `as` and `wrapper` removed and methods `solver` and `fork` added for better flow control.
+## Complete rewrite in version 3.0
+### UNDOCUMENTED - see test directory for usage.
 
-# clues.js
+# Old docs
+
 [Promises](https://github.com/promises-aplus) provide a very effective mechanism to construct complex interactions between asynchronous functions.  Most promise libraries focus on the promise object itself, and leave the actual structuring of complex logic up to the user.
 
 **clues.js** simplifies structuring of long complex chains of logic by recursively and automatically solving dependencies for any given logical operation.  Output of any logic is memoized in a fact table for efficiency.

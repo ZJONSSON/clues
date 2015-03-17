@@ -1,22 +1,23 @@
 var clues = require("../clues"),
     assert = require("assert");
 
+function shouldErr() { throw 'Should throw an error'; }
+
 describe('error',function() {
+  var c = {a: function(b) { return b;}};
 
   describe('when argument can´t be found',function() {
-    var c = clues({a:function(b) { return b;}});
-
     it('should throw an error',function() {
-      return c.solve('SOMETHING')
-        .then(null,function(e) {
+      return clues({},'SOMETHING')
+        .then(shouldErr,function(e) {
           assert.equal(e.ref,'SOMETHING');
           assert.equal(e.message, 'SOMETHING not defined');
         });
     });
 
     it('should show caller if a named logic function',function() {
-      return c.solve('a')
-        .then(null,function(e) {
+      return clues(c,'a')
+        .then(shouldErr,function(e) {
           assert.equal(e.ref,'b');
           assert.equal(e.message,'b not defined');
           assert.equal(e.caller,'a');
@@ -26,46 +27,49 @@ describe('error',function() {
 
   describe('thrown',function() {
     var logic = {
-      ERR : function() { throw "Could not process"; },
-      DEP : function(ERR) { return "Where is the error"; }
+      ERR : function() { throw 'Could not process'; },
+      DEP : function(ERR) { return 'Where is the error'; }
     };
+    var facts = Object.create(logic);
 
     describe('directly',function() {
-      var c = clues(logic);
-
+      
       it('should show up as first argument (err)',function() {
-        return c.solve('ERR')
-          .then(null,function(e) {
+        return clues(facts,'ERR')
+          .then(shouldErr,function(e) {
             assert.equal(e.ref,'ERR');
             assert.equal(e.message,'Could not process');
           });
       });
 
-      it ('should update the fact table',function() {
-        return c.solve(function(facts) {
+      it ('should update the facts',function() {
           var e = facts.ERR.reason();
           assert.equal(e.ref,'ERR');
-          assert.equal(e.message,'Could not process');
-        });
+          assert.equal(e.message,'Could not process'); 
       });
     });
 
     describe('indirectly',function() {
-      var c = clues(logic);
+      
       it('should throw same error for dependent logic',function() {
-        return c.solve('DEP')
-          .then(null,function(e) {
+        return clues(facts,'DEP')
+          .then(shouldErr,function(e) {
             assert.equal(e.ref,'ERR');
             assert.equal(e.message,'Could not process');
           });
       });
 
       it('should contain reference to the first caller',function() {
-        return c.solve('DEP')
-          .then(null,function(e) {
+        facts = Object.create(logic);
+        return clues(facts,'DEP')
+          .catch(function() {
+            return clues(facts,'ERR');
+          })
+          .then(shouldErr,function(e) {
             assert.equal(e.caller,'DEP');
           });
       });
     });
   });
 });
+

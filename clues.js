@@ -1,129 +1,100 @@
-// clues.js (c) 2009-2014 Ziggy.jonsson.nyc@gmail.com @license MIT
+var Promise = require('bluebird'),
+    reArgs = /function.*?\((.*?)\).*/;
 
-(function(self) {
-  if (typeof module !== 'undefined') {
-    clues.prototype.Promise = require('bluebird');
-    module.exports = clues;
-  } else {
-    clues.prototype.Promise = self.Promise;
-    self.clues = clues;
+function matchArgs(fn) {
+  if (!fn.__args__) {
+    var match = reArgs.exec(fn.prototype.constructor.toString());
+    fn.__args__ = match[1].replace(/\s/g,'')
+      .split(',')
+      .filter(function(d) {
+        return d.length;
+      });
   }
+  return fn.__args__;
+}
 
-  // Extract argument names from a function
-  var reArgs = /function.*?\((.*?)\).*/;
-  function matchArgs(fn) {
-    if (!fn.__args__) {
-      var match = reArgs.exec(fn.prototype.constructor.toString());
-      fn.__args__ = match[1].replace(/\s/g,'')
-        .split(",")
-        .filter(function(d) {
-          return d.length;
+function clues(logic,fn,$global,caller,fullref) {
+  var args,ref;
+
+  if (!$global) $global = {};
+  $global.$root = $global.$root ||  logic;
+    
+  if (typeof fn === 'string') {
+    ref = fn;
+  
+    var dot = ref.indexOf('.');
+    if (dot > -1) {
+      var next = ref.slice(0,dot);
+      return clues(logic,next,$global,caller,fullref)
+        .then(function(d) {
+          d.$parent = d.$parent || logic;          
+          logic = d;
+          ref = ref.slice(dot+1);
+          fullref = (fullref ? fullref+'.' : '')+next;
+          return clues(logic,ref,$global,caller,fullref);
+        })
+        .catch(function(e) {
+          if (logic[ref]) return Promise.fulfilled(logic[ref]);
+          if (logic.$service && typeof logic.$service === 'function')
+            return logic[ref] = clues(logic,function() { return logic.$service.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
+          else throw e;
         });
     }
-    return fn.__args__;
+
+    fullref = (fullref ? fullref+'.' : '')+ref;
+    fn = logic[ref];
+    if (fn === undefined) {
+      if ($global[ref]) return clues($global,ref,$global,caller,fullref);
+      if (logic.$property && typeof logic.$property === 'function')
+        return logic[ref] =  clues(logic,function() { return logic.$property.call(logic,ref); },$global,caller,fullref) ;
+      return Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller});
+    }
   }
 
-  function clues(logic,facts,options) {
-    if (!(this instanceof clues))
-      return new clues(logic,facts,options);
-    this.logic = logic || (typeof window === 'undefined' ? {} : window);
-    this.facts = facts || {};
-    this.options = options || {};
-    this.self = this;
+  // Support an array with argument names in front and the function as last element
+  if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
+    args = fn.slice(0,fn.length-1);
+    fn = fn[fn.length-1];
   }
+  // If the logic reference is not a function, we simply return the value
+  if (typeof fn !== 'function') return Promise.fulfilled(fn);
 
-  clues.version = "2.5.0";
-
-  clues.prototype.solve = function(fn,local,caller,fullref) {
-    var self = this, ref, args;
-    local = local || {};
-
-    if (typeof fn === "string") {
-      ref = fn;
-
-      // If we have already determined the fact we simply return it
-      if (self.facts[ref] !== undefined) return self.Promise.fulfilled(self.facts[ref]);
-
-      // If the reference contains dots we solve recursively
-      if (!self.options.ignoreDots && ref.indexOf('.') > -1) {
-        var keys = ref.split('.'), i=-1;
-        
-        return function next(d) {
-          var key = keys[++i];
-          if (!key) return self.Promise.fulfilled(d);
-          fullref = fullref ? fullref+'.'+key : key;
-          if (typeof d !== 'object') throw {ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'};
-          if (!d.solve) d = clues(d,{ parent : d.parent ? undefined : self},self.options);
-          return d.facts[keys.slice(i).join('.')] = d.solve(key,local,caller,fullref).then(next);
-        }(self);
-      }
-
-      // If we can't find any logic, we check self and local before returning an error
-      if (self.logic[ref] === undefined) {
-        if (caller !== '__user__') {
-          if (local[ref] !== undefined) return self.Promise.fulfilled(local[ref]);
-          if (self[ref] !== undefined && typeof self[ref] !== 'function') return self.Promise.fulfilled(self[ref]);
-        }
-        if (typeof(self.options.fallback) === 'function') return self.facts[ref] = self.Promise.fulfilled(self.options.fallback.call(this,ref,local,caller));
-        return self.Promise.rejected({ref: ref, fullref: fullref || ref, caller: caller, message: ref+' not defined', name: 'Undefined'});
-      }
-
-      fn = self.logic[ref];
-    }
-
-    // Support an array with argument names in front and the function as last element
-    if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
-      args = fn.slice(0,fn.length-1);
-      fn = fn[fn.length-1];
-    }
-
-    // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function') return self.facts[ref] = self.Promise.fulfilled(fn);
-
-    args = (args || matchArgs(fn))
-      .map(function(arg) {
-        var optional = arg[0] === '_';
-        if (optional) arg = arg.slice(1);
-
-        return self.solve(arg,local,ref)
-          .then(null,function(e) {
-            if (optional) return undefined;
-            else throw e;
-          });
-      });
-
-    // Wait for all arguments to be resolved before executing the function
-    var inputs =  self.Promise.all(args);
-    if (inputs.cancellable) inputs = inputs.cancellable();
-
-    return self.facts[ref] = inputs
-      .then(function(args) {
-        return fn.apply(self,args);
-      })
-      .then(null,function(e) {
-        if (e.name && e.name == 'CancellationError')
-          return args.forEach(function(arg) { arg.cancel(); });
-        if (typeof e !== 'object')
-          e = { message : e};
-        e.ref = e.ref || ref;
-        e.fullref = e.fullref || fullref;
-        e.caller = e.caller || caller || '';
-        throw e;
-      });
-  };
-
-  clues.prototype.solver = function(d,e,f) {
-    return this.solve.bind(this,d,e,f);
-  };
-
-  clues.prototype.fork = function(update) {
-    update = update || {};
-    var facts = Object.create(this.facts);
-    Object.keys(update).forEach(function(key) {
-      facts[key] = update[key];
+  args = (args || matchArgs(fn))
+    .map(function(arg) {
+      var optional,showError;
+      if (optional = (arg[0] === '_')) arg = arg.slice(1);
+      if (showError = (arg[0] === '_')) arg = arg.slice(1);
+      return clues(logic,arg,$global,ref,fullref)
+        .then(null,function(e) {
+          if (optional) return (showError) ? e : undefined;
+          else throw e;
+        });
     });
-    return clues(this.logic,facts,this.options);
-  };
 
-  clues.prototype.clues = clues.bind(undefined);
-})(this);
+  var inputs =  Promise.all(args);
+  if (inputs.cancellable) inputs = inputs.cancellable();
+
+  var value = inputs
+    .then(function(args) {
+      return fn.apply(logic, args);
+    })
+    .then(function(d) {
+      return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
+    },function(e) {
+      if (e.name && e.name == 'CancellationError')
+        return args.forEach(function(arg) { arg.cancel(); });
+      if (typeof e !== 'object')
+        e = { message : e};
+      e.error = true;
+      e.ref = e.ref || ref;
+      e.fullref = e.fullref || fullref;
+      e.caller = e.caller || caller || '';
+      throw e;
+    });
+
+  if (ref) logic[ref] = value;
+  return value;
+}
+
+clues.Promise = Promise;
+module.exports = clues;
