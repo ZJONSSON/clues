@@ -59,21 +59,21 @@ module.exports = function(api,config) {
           req.body[key] = req.params[key];
         });
       
-        var data = (select || req.param("fn").split(','))
-        .map(function(ref) {
-          var facts = Object.create(api);
-          return clues(facts,ref,{res:res,req:req,input:req.body},'__user__')
-            .catch(stringifyError)
-            .then(function(d) {
-              if (d === undefined) d = null;
-              var txt = {};
-              txt[ref] = d;
-              txt = first+JSON.stringify(txt,jsonReplacer,pretty);
-              first = '';
-              _res.write(txt.slice(1,txt.length-1)+',\t\n');
-              if (typeof(res.flush) == 'function') _res.flush();
-            });
-        });
+      var data = (select || req.params["fn"].split(','))
+      .map(function(ref) {
+        var facts = Object.create(api);
+        return clues(facts,ref,{res:res,req:req,input:req.body},'__user__')
+          .catch(stringifyError)
+          .then(function(d) {
+            if (d === undefined) d = null;
+            var txt = {};
+            txt[ref] = d;
+            txt = first+JSON.stringify(txt,jsonReplacer,pretty);
+            first = '';
+            _res.write(txt.slice(1,txt.length-1)+',\t\n');
+            if (typeof(res.flush) == 'function') _res.flush();
+          });
+      });
 
       req.on('close',function() {
         data.forEach(function(d) {
