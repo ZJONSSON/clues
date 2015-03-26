@@ -51,10 +51,15 @@ function clues(logic,fn,$global,caller,fullref) {
     }
   }
 
-  // Support an array with argument names in front and the function as last element
+  // Support an array with some argument names in front and the function as last element
   if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
     args = fn.slice(0,fn.length-1);
     fn = fn[fn.length-1];
+    var fnArgs = matchArgs(fn);
+    var numExtraArgs = fnArgs.length-args.length;
+    if (numExtraArgs) {
+      args = args.concat(fnArgs.slice(numExtraArgs));
+    }
   }
   // If the logic reference is not a function, we simply return the value
   if (typeof fn !== 'function') return Promise.fulfilled(fn);
