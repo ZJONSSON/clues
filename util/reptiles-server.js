@@ -2,8 +2,8 @@ var clues = require('../clues'),
     Promise = require('bluebird');
 
 function jsonReplacer(key, value) {
-  if (typeof value === 'object') {
-    var tmp = {},key;
+  if (value && typeof value === 'object') {
+    var tmp = Array.isArray(value) ? [] : {};
     for (key in value)
       tmp[key] = value[key];
     value = tmp;
