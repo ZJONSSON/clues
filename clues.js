@@ -50,6 +50,7 @@
       fullref = (fullref ? fullref+'.' : '')+ref;
       fn = logic[ref];
       if (fn === undefined) {
+        if (ref === '$global') return clues.Promise.fulfilled($global);
         if ($global[ref]) return clues($global,ref,$global,caller,fullref);
         if (logic.$property && typeof logic.$property === 'function')
           return logic[ref] =  clues(logic,function() { return logic.$property.call(logic,ref); },$global,caller,fullref) ;

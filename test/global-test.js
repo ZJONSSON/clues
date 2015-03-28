@@ -19,6 +19,10 @@ describe('Global variable',function() {
         }];
       }
     },
+    e : function($global) {
+      $global.test = 4;
+      return {f:{g:function(test) { return test;}}};
+    }
   };
 
   var facts = Object.create(logic);
@@ -44,6 +48,13 @@ describe('Global variable',function() {
     return instinct(facts,'d.c',global)
       .then(function(d) {
         assert.equal(d,29);
+      });
+  });
+
+  it('can be used as object $global',function() {
+    return instinct(facts,'e.f.g')
+      .then(function(d) {
+        assert.equal(d,4);
       });
   });
 });
