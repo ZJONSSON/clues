@@ -62,7 +62,7 @@ module.exports = function(api,config) {
       var data = (select || req.params["fn"].split(','))
       .map(function(ref) {
         var facts = Object.create(api);
-        return clues(facts,ref,{res:res,req:req,input:req.body},'__user__')
+        return clues(facts,ref,{res:res,req:req,input:req.body,$root:facts},'__user__')
           .catch(stringifyError)
           .then(function(d) {
             if (d === undefined) d = null;

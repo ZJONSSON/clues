@@ -24,7 +24,6 @@
     var args,ref;
 
     if (!$global) $global = {};
-    $global.$root = $global.$root ||  logic;
       
     if (typeof fn === 'string') {
       ref = fn;
