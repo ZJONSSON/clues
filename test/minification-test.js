@@ -16,6 +16,14 @@ describe('Angular style minification',function() {
           return M1+5;
         }];
       };
+    }],
+    input : {
+      a: 40,
+      b: 3
+    },
+    b: 2,
+    partial: ['input.a', function(a, b){
+      return a + b;
     }]
   };
 
@@ -43,6 +51,12 @@ describe('Angular style minification',function() {
   it('should not affect regular arrays',function() {
     return clues(facts,function(regular_array) {
       assert.equal(regular_array,logic.regular_array);
+    });
+  });
+
+  it('should work with partial positional arguments',function() {
+    return clues(facts, 'partial').then(function(r){
+      assert.equal(r, 42);
     });
   });
 });
