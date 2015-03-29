@@ -33,7 +33,7 @@
         var next = ref.slice(0,dot);
         return clues(logic,next,$global,caller,fullref)
           .then(function(d) {
-            d.$parent = d.$parent || logic;          
+            if (d) d.$parent = d.$parent || logic;          
             logic = d;
             ref = ref.slice(dot+1);
             fullref = (fullref ? fullref+'.' : '')+next;
