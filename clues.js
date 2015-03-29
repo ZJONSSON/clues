@@ -50,11 +50,15 @@
       fullref = (fullref ? fullref+'.' : '')+ref;
       fn = logic[ref];
       if (fn === undefined) {
-        if (ref === '$global') return clues.Promise.fulfilled($global);
-        if ($global[ref]) return clues($global,ref,$global,caller,fullref);
-        if (logic.$property && typeof logic.$property === 'function')
-          return logic[ref] =  clues(logic,function() { return logic.$property.call(logic,ref); },$global,caller,fullref) ;
-        return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller});
+        if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
+          fn = Object.getPrototypeOf(logic)[ref];
+        else if (ref === '$global')
+          return clues.Promise.fulfilled($global);
+        else if ($global[ref])
+          return clues($global,ref,$global,caller,fullref);
+        else if (logic.$property && typeof logic.$property === 'function')
+          fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
+        else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller});
       }
     }
 

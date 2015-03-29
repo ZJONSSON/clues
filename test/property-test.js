@@ -64,7 +64,7 @@ describe('$property',function() {
           throw 'Should Error';
         },function(e) {
           assert.equal(e.message,'NOT_A_NUMBER');
-          assert.equal(e.ref,undefined);
+          assert.equal(e.ref,'abc');
           assert.equal(e.fullref,'simple.abc');
           assert.equal(e.caller,'__test__');
           assert.equal(facts.simple.abc.isRejected(),true);
