@@ -29,7 +29,7 @@
       ref = fn;
     
       var dot = ref.indexOf('.');
-      if (dot > -1) {
+      if (dot > -1 && logic[ref] === undefined) {
         var next = ref.slice(0,dot);
         return clues(logic,next,$global,caller,fullref)
           .then(function(d) {
