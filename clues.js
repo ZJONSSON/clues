@@ -40,7 +40,6 @@
             return clues(logic,ref,$global,caller,fullref);
           })
           .catch(function(e) {
-            if (logic[ref]) return clues.Promise.fulfilled(logic[ref]);
             if (logic.$service && typeof logic.$service === 'function')
               return logic[ref] = clues(logic,function() { return logic.$service.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
             else throw e;
