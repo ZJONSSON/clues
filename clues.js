@@ -24,6 +24,12 @@
     var args,ref;
 
     if (!$global) $global = {};
+
+    if (typeof logic === 'function')
+      return clues({},logic,$global,caller,fullref)
+        .then(function(logic) {
+          return clues(logic,fn,$global,caller,fullref);
+        });
       
     if (typeof fn === 'string') {
       ref = fn;
