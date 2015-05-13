@@ -6,9 +6,9 @@ describe('Global variable',function() {
     a: 123,
     b: {
       count : 0,
-      c : ['$input.test','$parent.a',function(test,a) {
+      c : ['$input.test',function(test) {
         this.count +=1;
-        return test+a;
+        return test+123;
       }]
     },
     d: {
