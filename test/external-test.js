@@ -2,12 +2,12 @@ var clues = require("../clues"),
     assert = require("assert"),
     Promise = require('bluebird');
 
-describe('$service',function() {
+describe('$external',function() {
   var logic = {
     a : 5,
     simple : Object.create({
       count : 0,
-      $service : function(ref) {
+      $external : function(ref) {
         this.count+=1;
         if (ref == 'STOP') throw {message:'STOP_ERROR',error:true};
         return 'simple:'+ref;
@@ -32,7 +32,7 @@ describe('$service',function() {
   var facts = Object.create(logic);
 
   describe('in simple logic',function() {
-    it('runs $service function for non-existent property',function() {
+    it('runs $external function for non-existent property',function() {
       return clues(facts,'simple.test')
         .then(function(d) {
           assert.equal(d,'simple:test');

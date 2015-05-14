@@ -45,8 +45,8 @@
             return clues(logic,ref,$global,caller,fullref);
           })
           .catch(function(e) {
-            if (logic.$service && typeof logic.$service === 'function')
-              return logic[ref] = clues(logic,function() { return logic.$service.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
+            if (logic.$external && typeof logic.$external === 'function')
+              return logic[ref] = clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
             else throw e;
           });
       }
