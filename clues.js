@@ -77,7 +77,7 @@
       }
     }
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function') return clues.Promise.fulfilled(fn);
+    if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.fulfilled(fn);
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
