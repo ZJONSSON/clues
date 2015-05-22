@@ -7,7 +7,7 @@
     self.clues = clues;
   }
 
-  var reArgs = /function.*?\((.*?)\).*/;
+  var reArgs = /function.*?\(([^)]*?)\).*/;
   function matchArgs(fn) {
     if (!fn.__args__) {
       var match = reArgs.exec(fn.prototype.constructor.toString());

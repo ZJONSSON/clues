@@ -9,7 +9,10 @@ describe('complex tree',function() {
     M2 : function() { return Promise.delay(300,20); },
     M3 : function(M1,M2) { return M1+M2; },
     M4 : function() { return Promise.delay(70,150); },
-    MTOP : function(M3,M4) { return M3+M4; }
+    MTOP : function(
+      M3,
+      M4
+      ) { return M3+M4; }
   };
 
   var facts = Object.create(logic);
