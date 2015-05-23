@@ -1,6 +1,6 @@
 **clues.js** is a lean-mean-promisified-getter-machine that crunches through any javascript objects, including complex trees,  functions, values and promises.  Clues consists of a single getter function (just over 100 loc) that dynamically resolves dependency trees and memoizes resolutions (lets call them derived facts) along the way.   
 
-*Prior versions of clues were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions*
+*[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions*
 
 The basic function signature is simple and **always** returns a promise:
 #### `clues(obj,fn,[$global])`
