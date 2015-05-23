@@ -56,7 +56,8 @@ module.exports = function(api,options) {
         req.body[key] = req.params[key];
       });
     
-    var data = (options.select || req.params.fn.split(','))
+    // The api request is either determined by options.select, req.param.fn or by remaining url
+    var data = (options.select || (req.params.fn || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
         ref = ref.replace(/\//g,'.');
         var facts = typeof(api) === 'object' ? Object.create(api) : api;
