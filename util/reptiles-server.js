@@ -37,7 +37,7 @@ module.exports = function(api,options) {
 
   return function(req,res) {
     var _res = (!options.quiet) ? res : {set: noop, write: noop, flush: noop},
-        pretty = req.query.pretty && 2,
+        pretty = (options.pretty || req.query.pretty) && 2,
         first = '{                                     \t\n\n';
     req.body = req.body || {};
     _res.set('Transfer-Encoding','chunked');
