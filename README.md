@@ -23,7 +23,7 @@ The second argument is a reference to the property/function requested, defined a
 * Array defined function (see below)
 
 Here are a few examples:
-```
+```js
 clues(obj,'person').then(console.log);              // by name
 clues(obj,function(person) { console.log(person); }) // by function
 clues(obj,['person',console.log]);                  // by array defined function
@@ -43,7 +43,7 @@ and here is an advanced example:
 ### the mean function resolution machine
 Whenever `clues` hits a property that is an unresolved function it will parse the argument names (if any) and attempt to resolve the argument values (from properties within same scope that have the same name as each argument).  Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution.   If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..   Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.   
 
-```
+```js
 var obj = {
   miles : 220,
   hours : Promise.fulfilled(2.3),  // we can also define as promise
@@ -79,7 +79,7 @@ An entirely fresh logic/facts object is required for a different context (i.e. d
 
 Here is a simple example:
 
-```
+```js
 // First we define a prototype of the logic/facts, which can be a
 // blend of constants and functions:
 
@@ -121,7 +121,7 @@ obj = Object.create(Logic,{
 Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref` the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  The rejection object will also contain `fullref` a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.  The rejection handling by `clues` will not force errors into formal Error Objects, which can be useful to distinguish between javascript errors (which are Error Object with `.stack`) and customer 'string' error messages (which may not have `.stack`).
 
 Example: passing thrown string errors to the client while masking javascript error messages
-```
+```js
   .then(null,function(e) {
     if (e.stack) res.send(500,'Internal Error');
     else res.send(e.message);
@@ -130,7 +130,7 @@ Example: passing thrown string errors to the client while masking javascript err
 
 ### making arguments optional with the underscore prefix
 If any argument to a function resolves as a rejected promise (i.e. errored) then the function will not run and simply be rejected as well.  But sometimes we want to continue nevertheless.  Any argument to any function can be made optional by prefixing the argument name with an underscore.   If the resolution of the optional argument returns a rejected promise (or the optional argument does not exist), then the value of this argument to the function will simply be `undefined`.   
-```
+```js
 var obj = {
   value : 42,
   badCall : function() { throw 'This is an error'; }
@@ -157,7 +157,7 @@ Functions can be defined in array form, where the function itself is placed in t
 
 In the following example, the local variable `a` stands for the `input1` fact and `b` is the `input2` fact
 
-```
+```js
 var Logic = {
   test : ['input1','input2',function(a,b) {
     ... function body ...
@@ -170,7 +170,7 @@ Warning: Any array whose last element is a function, will be handled like an arr
 Logic object can contain objects (or functions that return objects) providing separate children scopes.  Trees of child scopes can be traversed using dot notation, either by requesting a string path directly from the `clues` function or using dot notation for argument names in any array-defined function (see above).   
 
 Example:
-```
+```js
 var Cabinet = {
   drawer : {
     items : ['A','B','C','D' ]
@@ -202,7 +202,7 @@ In the previous example all the values of the nested tree were already determine
 
 The following logic supports the same outcomes as the previous example:
 
-```
+```js
 function obj() {
   return {
     drawer : function() {
@@ -224,7 +224,7 @@ Keep in mind that since the provided logic in this example is a function (creati
 ### global variables
 The third parameter to the `clues` function is an optional global object, whose properties are accessible n any scope (as a fallback).  This makes it particularly easy to provide services or general inputs (from the user) without having to 'drag those properties manually' through the tree to ensure they exist in each scope where they are needed.
 
-```
+```js
 var Logic = {
   repeat : ['input.verb',function(verb) { return 'I am '+verb; }],
   parent : {
@@ -247,7 +247,7 @@ A bit of care is required if the same logic/facts object (not fresh new clone) i
 ### $ at your service
 Any function whose property name starts with a `$` will simply be resolved as the function itself, not the result of the function execution machine.  This is a great method to pass global functions into any scope (as they won't be morphed into a promise on their value).
 
-```
+```js
 var Global = {
   $emit : function(d) {
     console.log('emitting ',d);
@@ -277,7 +277,7 @@ It is worth noting that this functionality only applies to functions.  If an obj
 ### $property - lazily create children by missing reference
 If a particular property can not be found in a given object, clues will try to locate a `$property` function.  If that function exists, it is executed with the missing property name as the first argument and the missing value is set to be the function outcome.
 
-```
+```js
 obj = {
   users : {
     all : function() {
@@ -301,7 +301,7 @@ clues(obj,'user.3.name')
   .then(console.log)  // would print the property 'name' for user 3
 ```
  After 'user3.name' has been resolved, the `obj` has three properties: 
-```
+```js
  {
    users : [resolved promise on the list of users],
    $property : [function],
@@ -313,7 +313,7 @@ clues(obj,'user.3.name')
 If an undefined property can not locate a `$property` function it will look for an `$external` function.   The purpose of the `$external` function is similar except that the argument passed to the function will be the full remaining reference (in dot notation), not just the next reference in the chain.
 
 Here is an example of how the clues tree can be seamlessly extended to an external api using the `$external` property: 
-```
+```js
 var request = Promise.promisifyall(require('request'));
 
 var Logic = {
@@ -341,7 +341,7 @@ clues(obj,['myinfo',console.log))
 ```
 ### function that returns a function that returns a...
 If the resolved value of any function is itself a function, that returned function will also be resolved (within the same scope).  This allows for very powerful 'gateways' that constrains the tree traversal only to segments that are relevant for a particular solutions.
-```
+```js
 Logic = {
   tree_a : {....},
   tree_b : {....},
@@ -387,7 +387,7 @@ express()
 ### moar stuff A: listening to your parents
 
 The dot notation only works downwards from current scope.  But what if you require variables from the parent scopes?   There are few ways to accomplish this.  One is to simply pass the required value through the functional scope of a peer or the required input:
-```
+```js
 var Logic = {
   Charlie : ['Andy.mood',function(andyMood) {
     return {
@@ -404,7 +404,7 @@ clues(Object.create(Logic),'Charlie.John')
 ```
 
 Another way is to have the parent set property of the child to whatever should be passed down:
-```
+```js
 var ChildLogic = {
   John : ['Andy.mood',function(andyMood) {
     return 'John knows Andy is '+andyMood;
@@ -423,7 +423,7 @@ clues(Object.create(Logic),'Charlie.John')
 ```
 
 Yet another example, is to define global variable `$root` pointing to the top parent, which allows us to navigate very easily from any child:
-```
+```js
 var Logic = {
   Charlie : {
     John : ['$root.Andy.mood',function(d) {
