@@ -59,7 +59,7 @@ module.exports = function(api,options) {
     var data = (options.select || req.params.fn.split(','))
       .map(function(ref) {
         ref = ref.replace(/\//g,'.');
-        var facts = Object.create(api);
+        var facts = typeof(api) === 'object' ? Object.create(api) : api;
         return clues(facts,ref,{res:res,req:req,input:req.body,$root:facts},'__user__')
           .catch(stringifyError)
           .then(function(d) {
