@@ -2,7 +2,7 @@ var clues = require("../clues"),
     assert = require("assert"),
     Promise = require('bluebird');
 
-describe('Angular style minification',function() {
+describe('Array functions',function() {
 
   var logic = {
     M1 : [function() { return Promise.delay(10,100); }],
