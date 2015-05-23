@@ -11,7 +11,7 @@ The first argument of the clues function should be the object containing the log
 * Functions (i.e. logic) returning anything else in this list 
 * Promises returning anything else in this list
 * Other javascript objects (child scopes)
-* Functions returning a functions that returns anything in this list....
+* Functions returning a function that returns anything in this list....
 * ....etc
 
  
@@ -20,7 +20,7 @@ The second argument is a reference to the property/function requested, defined a
 
 * Name of the property to be resolved (or a path to the property, using dot notation)
 * A custom function whose argument names will be resolved from the logic/facts prior to execution
-* Array defined function (see below)
+* Array defined function (see [below](#using-special-arrays-to-define-functions))
 
 Here are a few examples:
 ```js
@@ -29,7 +29,7 @@ clues(obj,function(person) { console.log(person); }) // by function
 clues(obj,['person',console.log]);                  // by array defined function
 ```
 ##### global (optional third argument)
-The third argument is an optional global object, whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
+The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
 `clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
 
 ##### caller and fullref (internal)
@@ -65,10 +65,10 @@ clues(obj,function(minutes,mph) {
 ```
 There are only a few restrictions and conventions you must into account when defining property names.
 
-* Any property name starting with a $ bypasses the main function cruncher (great for services)
-* `$property` and `$external` are special handlers for missing properties  (if they are functions)
-* Property names really should never start with an underscore (see optional variables)
-* Any array whose last element is a function will be evaluated as a function... Angular style
+* Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (great for services)
+* [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (if they are functions)
+* Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
+* Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
 
 That's pretty much it.
 
@@ -167,7 +167,7 @@ var Logic = {
 Warning: Any array whose last element is a function, will be handled like an array-defined function, like it or not. 
 
 ### nesting and parenthood
-Logic object can contain objects (or functions that return objects) providing separate children scopes.  Trees of child scopes can be traversed using dot notation, either by requesting a string path directly from the `clues` function or using dot notation for argument names in any array-defined function (see above).   
+Logic object can contain objects (or functions that return objects) providing separate children scopes.  Trees of child scopes can be traversed using dot notation, either by requesting a string path directly from the `clues` function or using dot notation for argument names in any array-defined function (see [above](#using-special-arrays-to-define-functions)).   
 
 Example:
 ```js
@@ -195,7 +195,7 @@ clues(obj,function(fourthItem) {
   console.log(fourthItem);
 });
 ```
-It is worth noting that children do not inherit anything from parents.   If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see appendix)
+It is worth noting that children do not inherit anything from parents.   If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see [appendix](#moar-stuff-a-listening-to-your-parents))
 
 ### complex nesting? no problem!
 In the previous example all the values of the nested tree were already determined.  But `clues` makes no distinction between resolved structures and unresolved when traversing down the tree. It crunches through any functions and promises along the way,  without mercy. 
