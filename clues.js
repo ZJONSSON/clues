@@ -56,8 +56,6 @@
       if (fn === undefined) {
         if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
-        else if (ref === '$global')
-          return clues.Promise.fulfilled($global);
         else if ($global[ref])
           return clues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
@@ -81,10 +79,20 @@
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
-        var optional,showError;
+        var optional,showError,res;
         if (optional = (arg[0] === '_')) arg = arg.slice(1);
         if (showError = (arg[0] === '_')) arg = arg.slice(1);
-        return clues(logic,arg,$global,ref,fullref)
+
+        if (arg[0] === '$' && logic[arg] === undefined) {
+          if (arg === '$caller')
+            res = clues.Promise.fulfilled(caller);
+          else if (arg === '$fullref')
+            res = clues.Promise.fulfilled(fullref);
+          else if (arg === '$global')
+            res = clues.Promise.fulfilled($global);
+        }
+
+        return res || clues(logic,arg,$global,ref,fullref)
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;

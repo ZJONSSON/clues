@@ -67,6 +67,8 @@ There are only a few restrictions and conventions you must into account when def
 
 * Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (great for services)
 * [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (if they are functions)
+* `$global` will always return the full global object provided, in any context.
+* `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
 
