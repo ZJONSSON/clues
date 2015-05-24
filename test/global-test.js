@@ -1,4 +1,4 @@
-var instinct = require("../clues"),
+var clues = require("../clues"),
     assert = require("assert");
 
 describe('Global variable',function() {
@@ -22,6 +22,17 @@ describe('Global variable',function() {
     e : function($global) {
       $global.test = 4;
       return {f:{g:function(test) { return test;}}};
+    },
+    h : function() {
+      return {
+        $global : 'OVERRIDE_$GLOBAL',
+        i : function($global) {
+          return $global;
+        },
+        j : function(test) {
+          return test
+        }
+      };
     }
   };
 
@@ -37,7 +48,7 @@ describe('Global variable',function() {
   };
 
   it('should be applied where referenced',function() {
-    return instinct(facts,'b.c',global)
+    return clues(facts,'b.c',global)
       .then(function(d) {
         assert.equal(d,133);
         assert.equal(facts.b.count,1);
@@ -45,14 +56,14 @@ describe('Global variable',function() {
   });
 
   it('should be applied inside a function',function() {
-    return instinct(facts,'d.c',global)
+    return clues(facts,'d.c',global)
       .then(function(d) {
         assert.equal(d,29);
       });
   });
 
   it('can be used as object $global',function() {
-    return instinct(facts,'e.f.g')
+    return clues(facts,'e.f.g',global)
       .then(function(d) {
         assert.equal(d,4);
       });
