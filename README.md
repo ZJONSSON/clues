@@ -30,6 +30,7 @@ clues(obj,['person',console.log]);                  // by array defined function
 ```
 ##### global (optional third argument)
 The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
+
 `clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
 
 ##### caller and fullref (internal)
@@ -166,7 +167,7 @@ var Logic = {
   }]
 };
 ```
-Warning: Any array whose last element is a function, will be handled like an array-defined function, like it or not. 
+Warning: Any array whose **last element** is a function, will be handled like an array-defined function, like it or not.   Additionally, if the **first element** of the array is an (i) object or a (ii) function, the first element will be used as the context (fact/logic object) the function executes in (see [private parts](#private-parts))
 
 ### nesting and parenthood
 Logic object can contain objects (or functions that return objects) providing separate children scopes.  Trees of child scopes can be traversed using dot notation, either by requesting a string path directly from the `clues` function or using dot notation for argument names in any array-defined function (see [above](#using-special-arrays-to-define-functions)).   
@@ -358,6 +359,78 @@ Logic = {
 
 clues(Logic,'continue',{step:'a'})
 ```
+### private parts
+#### access control
+Access to certain sub-trees of a fact/logic can be controlled through closures that evaluate user privileges before handing over the privileged parts.  
+
+Example, assuming a global object `res` that has a `user` record that defines whether a user has admin privileges  or not:
+
+```js
+var User = {
+  info : function(userid) {.....},
+  changePassword : [input.password,input.confirm,function() {.....},
+  admin : ['req.user.admin',function(admin) {
+    if (!admin) throw 'NO_ACCESS';
+    return {
+      delete : function() {...},
+      logs : function () {...}
+    }
+```
+Unauthorized users will get an error if they try to query any of the admin functions, while admins have unlimited access.    
+
+#### using first element to define private scope
+But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?   Array defined functions can be used to form gateways from one tree into a subtree of another.  If the first element of an array-defined function is an object or a function, that object provides a separate scope the function will be evaluated in.  The function can therefore act as a selector from this private scope.
+
+Public/private Example:
+```js
+var PrivateLogic  = {
+  secret : 'Hidden secret',
+
+  hash : function(secret,password) {
+    return crypto.createHash('sha1').update(secret).update(password).digest('hex');
+  },
+
+  public : function(userid,hash) {
+    return db.find({user_id:user_id,password:hash})
+      .then(function(d) {
+        return {name:d.name,email:d.email};
+      });
+  }
+};
+
+var Logic = {
+  user : function(_userid,_password) {
+    var private = Object.create(PrivateLogic);
+    private.userid = _userid;
+    private.password = _password;
+    return [private,'public',Object];
+  }
+};
+
+var obj = Object.create(Logic,{
+  userid : {value: 'user123'},
+  password : {value: 'abc123'}
+});
+
+clues(obj,'user.name')
+  .then(console.log,console.log);  // Prints  name
+```
+
+In this example `user.info` points to an instance of `PrivateLogic.public` without providing any access to the other properties or the private object, `secret` or `hash`.    It is worth noting that names of private properties might still be exposed under `fullref` of an error.  For example if password is not provided above, the fullref of the error will be `user.public.hash.password` with the message `password not defined`
+
+The gateway function could have been with argument names inside or outside the function, even extra arguments.  What really matters is what the gateway function returns:
+```js
+return [private,function(public) { return public;}];
+return [private,function(public,hash,secret) { return public;}];
+return [private,'public','hash',function(a,b) { return a;}];
+
+```
+
+Similarly, a private scope can be generated in-line using a function:
+```js
+{ answer: [function() { return { a : function(b) { return b+1;}, b:41};},'a',Number])}
+```
+where `answer.a` = 42, but `b` is unreachable
 
 ### Cancellability
 Each promise chain is cancellable, but the ability to cancel only reaches those logic functions that explicitly return cancellable promises. Any logic already resolved before a cancel is issued, will not be affected.  Here is a pseudo example of how such cancellation could be incorporated with an expensive database query:
