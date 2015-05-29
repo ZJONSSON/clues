@@ -55,13 +55,19 @@ module.exports = function(api,options) {
       .forEach(function(key) {
         req.body[key] = req.params[key];
       });
-    
+
+    var $global = {res:res,req:req,input:req.body},
+        facts = (typeof(api) === 'function')
+          ? clues({},api,$global,'reptiles')
+          : Object.create(api);
+
+    $global.root = facts;
+
     // The api request is either determined by options.select, req.param.fn or by remaining url
     var data = (options.select || (req.params.fn || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
         ref = ref.replace(/\//g,'.');
-        var facts = typeof(api) === 'object' ? Object.create(api) : api;
-        return clues(facts,ref,{res:res,req:req,input:req.body,$root:facts},'__user__')
+        return clues(facts,ref,$global,'__user__')
           .catch(stringifyError)
           .then(function(d) {
             if (d === undefined) d = null;
