@@ -25,7 +25,7 @@
 
     if (!$global) $global = {};
 
-    if (typeof logic === 'function')
+    if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
       return clues({},logic,$global,caller,fullref)
         .then(function(logic) {
           return clues(logic,fn,$global,caller,fullref);
