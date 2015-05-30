@@ -64,7 +64,7 @@ module.exports = function(api,options) {
     $global.root = facts;
 
     // The api request is either determined by options.select, req.param.fn or by remaining url
-    var data = (options.select || (req.params.fn || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
+    var data = (options.select || decodeURI(req.params.fn || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
         ref = ref.replace(/\//g,'.');
         return clues(facts,ref,$global,'__user__')
