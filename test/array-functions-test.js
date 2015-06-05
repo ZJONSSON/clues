@@ -1,5 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert"),
+var clues = require('../clues'),
+    assert = require('assert'),
     Promise = require('bluebird');
 
 describe('Array functions',function() {

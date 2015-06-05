@@ -1,5 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert"),
+var clues = require('../clues'),
+    assert = require('assert'),
     Promise = require('bluebird');
 
 describe('optional argument',function() {
@@ -49,7 +49,7 @@ describe('optional argument',function() {
 
   describe('as an error',function() {
     var logic2 = {
-      error : function() { throw "#Error"; },
+      error : function() { throw '#Error'; },
       optional : function(_error) { return _error; },
       regular : function(error) { return error; },
       showerror : function(__error) { return __error;}
@@ -64,10 +64,10 @@ describe('optional argument',function() {
 
     it('should raise error if non-optonal',function() {
       return clues(Object.create(logic2),'regular')
-        .then(function(d) {
+        .then(function() {
           throw 'Should error';
         },function(e) {
-          assert.equal(e.message,"#Error");
+          assert.equal(e.message,'#Error');
         });
     });
 

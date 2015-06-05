@@ -1,5 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert");
+var clues = require('../clues'),
+    assert = require('assert');
 
 function shouldErr() { throw 'Should throw an error'; }
 

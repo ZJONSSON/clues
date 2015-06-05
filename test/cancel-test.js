@@ -1,6 +1,6 @@
-var clues = require("../clues"),
+var clues = require('../clues'),
     Promise = require('bluebird'),
-    assert = require("assert");
+    assert = require('assert');
 
 describe('cancellation',function() {
   var cancel = {};

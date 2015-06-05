@@ -1,5 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert"),
+var clues = require('../clues'),
+    assert = require('assert'),
     crypto = require('crypto');
 
 function shouldError() { throw 'Should not run';}

@@ -1,6 +1,5 @@
-var instinct = require("../clues"),
-    assert = require("assert"),
-    Promise = require('bluebird');
+var instinct = require('../clues'),
+    assert = require('assert');
 
 describe('$property',function() {
   var logic = {

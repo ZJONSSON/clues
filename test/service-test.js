@@ -1,6 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert"),
-    Promise = require('bluebird');
+var clues = require('../clues'),
+    assert = require('assert');
 
 describe('$ as a first letter',function() {
 

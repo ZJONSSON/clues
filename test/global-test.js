@@ -1,5 +1,5 @@
-var clues = require("../clues"),
-    assert = require("assert");
+var clues = require('../clues'),
+    assert = require('assert');
 
 describe('Global variable',function() {
   var logic = {
@@ -30,7 +30,7 @@ describe('Global variable',function() {
           return $global;
         },
         j : function(test) {
-          return test
+          return test;
         }
       };
     }
