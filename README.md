@@ -379,7 +379,7 @@ var User = {
 Unauthorized users will get an error if they try to query any of the admin functions, while admins have unlimited access.    
 
 #### using first element to define private scope
-But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?   Array defined functions can be used to form gateways from one tree into a subtree of another.  If the first element of an array-defined function is an object or a function, that object provides a separate scope the function will be evaluated in.  The function can therefore act as a selector from this private scope.
+But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?   Array defined functions can be used to form gateways from one tree into a subtree of another.  If the first element of an array-defined function is an object (and not an array) or a function, that object provides a separate scope the function will be evaluated in.  The function can therefore act as a selector from this private scope.
 
 Public/private Example:
 ```js

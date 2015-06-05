@@ -9,6 +9,7 @@ describe('Array functions',function() {
     M2 : function() { return Promise.delay(300,20); },
     M3 : ['M1','M2',function(a,b) { return a+b; }],
     M4 : function(M3) { return M3;},
+    recursive : [['M1',Number],[['M2',Number],['M3',Number],Array],Array],
     regular_array : [1,2,3,4],
     nested : [function() {
       return function() {
@@ -57,6 +58,12 @@ describe('Array functions',function() {
   it('should work with partial positional arguments',function() {
     return clues(facts, 'partial').then(function(r){
       assert.equal(r, 42);
+    });
+  });
+
+  it('should work recursively',function() {
+    return clues(facts,'recursive').then(function(d) {
+      assert.deepEqual(d,[10,[300,310]]);
     });
   });
 });
