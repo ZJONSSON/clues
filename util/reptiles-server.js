@@ -2,14 +2,17 @@ var clues = require('../clues'),
     Promise = require('bluebird');
 
 function jsonReplacer(key, value) {
-  if (value && typeof value === 'object') {
+  if (!value || value instanceof Date) return value;
+  if (typeof value === 'function' || value.length && typeof value[value.length-1] === 'function')
+    return '[Function]';
+  if (typeof value.then === 'function')
+      return '[Promise]';
+  if (typeof value === 'object' ) {
     var tmp = Array.isArray(value) ? [] : {};
     for (key in value)
-      tmp[key] = value[key];
+      tmp[key] = jsonReplacer(key,value[key]);
     value = tmp;
   }
-  if (typeof value === 'function' || (value && value.length && typeof value[value.length-1] === 'function'))
-    return '[Function]';
   return value;
 }
 
@@ -71,6 +74,7 @@ module.exports = function(api,options) {
           .catch(stringifyError)
           .then(function(d) {
             if (d === undefined) d = null;
+            for (var key in d) d[key] = d[key];
             var txt = {};
             txt[ref] = d;
             txt = first+JSON.stringify(txt,jsonReplacer,pretty);
