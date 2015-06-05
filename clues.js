@@ -66,7 +66,7 @@
 
     // Support an array with some argument names in front and the function as last element
     if (typeof fn === 'object' && fn.length && typeof fn[fn.length-1] == 'function') {
-      if (fn.length > 1 && (typeof(fn[0]) === 'object' || typeof(fn[0]) == 'function')) {
+      if (fn.length > 1 && (typeof(fn[0]) === 'object' || typeof(fn[0]) == 'function') && !fn[0].length) {
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];

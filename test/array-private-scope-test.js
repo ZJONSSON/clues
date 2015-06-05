@@ -21,6 +21,11 @@ describe('Array fn private scope',function() {
       };
     }
 
+    var public = {
+      M1 : 100,
+      M2 : 200
+    };
+
     it('works without array arguments',function() {
       var obj = private();
       return clues(null,[obj,function(answer) {
@@ -49,6 +54,13 @@ describe('Array fn private scope',function() {
           assert.equal(e.message,'This is an error');
         });
     });
+
+    it('works recursively',function() {
+      return clues({},[Object.create(public),[['M1',Number],['M2',Number],[private(),'forty',Number],Array],function(d) {
+        assert.deepEqual(d,[100,200,40]);
+      }]);
+    });
+
   });
 
   describe('public/private structure',function() {
