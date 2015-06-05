@@ -20,15 +20,18 @@
     return fn.__args__;
   }
 
-  function clues(logic,fn,$global,caller,fullref) {
+  var ID = 0;
+
+  function clues(logic,fn,$global,caller,fullref,crumbs) {
     var args,ref;
 
     if (!$global) $global = {};
+    crumbs = crumbs || {};
 
     if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
-      return clues({},logic,$global,caller,fullref)
+      return clues({},logic,$global,caller,fullref,crumbs)
         .then(function(logic) {
-          return clues(logic,fn,$global,caller,fullref);
+          return clues(logic,fn,$global,caller,fullref,crumbs);
         });
       
     if (typeof fn === 'string') {
@@ -37,7 +40,7 @@
       var dot = ref.indexOf('.');
       if (dot > -1 && logic[ref] === undefined) {
         var next = ref.slice(0,dot);
-        return clues(logic,next,$global,caller,fullref)
+        return clues(logic,next,$global,caller,fullref,crumbs)
           .then(function(d) {
             logic = d;
             ref = ref.slice(dot+1);
@@ -46,7 +49,7 @@
           })
           .catch(function(e) {
             if (logic && logic.$external && typeof logic.$external === 'function')
-              return logic[ref] = clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
+              return logic[ref] = clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref,crumbs);
             else throw e;
           });
       }
@@ -57,7 +60,7 @@
         if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref])
-          return clues($global,ref,$global,caller,fullref);
+          return clues($global,ref,$global,caller,fullref,crumbs);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
         else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller});
@@ -70,7 +73,7 @@
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
-        return clues(obj,fn,$global,caller,fullref);
+        return clues(obj,fn,$global,caller,fullref,crumbs);
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];
@@ -81,7 +84,19 @@
       }
     }
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.fulfilled(fn);
+    if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
+      if (fn && fn.then && crumbs[fn.ID]) 
+        return clues.Promise.rejected({message:'recursive',ref:ref,fullref:fullref,caller:caller,id:fn.ID});
+      else 
+        return clues.Promise.fulfilled(fn);
+    }
+     
+    crumbs = Object.create(crumbs);
+    crumbs[ID++] = ref;
+
+    var defer = clues.Promise.defer();
+    defer.promise.ID = ID;
+    if (ref) logic[ref] = defer.promise;
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
@@ -98,7 +113,7 @@
             res = clues.Promise.fulfilled($global);
         }
 
-        return res || clues(logic,arg,$global,ref,fullref)
+        return res || clues(logic,arg,$global,ref,fullref,crumbs)
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;
@@ -113,7 +128,7 @@
         return fn.apply(logic, args);
       })
       .then(function(d) {
-        return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
+        return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref,crumbs);
       },function(e) {
         if (e.name && e.name == 'CancellationError')
           return args.forEach(function(arg) { arg.cancel(); });
@@ -126,7 +141,7 @@
         throw e;
       });
 
-    if (ref) logic[ref] = value;
+    defer.resolve(value);
     return value;
   }
 
