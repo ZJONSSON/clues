@@ -81,7 +81,7 @@
       }
     }
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.fulfilled(fn);
+    if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.resolve(fn);
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
@@ -91,11 +91,11 @@
 
         if (arg[0] === '$' && logic[arg] === undefined) {
           if (arg === '$caller')
-            res = clues.Promise.fulfilled(caller);
+            res = clues.Promise.resolve(caller);
           else if (arg === '$fullref')
-            res = clues.Promise.fulfilled(fullref);
+            res = clues.Promise.resolve(fullref);
           else if (arg === '$global')
-            res = clues.Promise.fulfilled($global);
+            res = clues.Promise.resolve($global);
         }
 
         return res || clues(logic,arg,$global,ref,fullref)
