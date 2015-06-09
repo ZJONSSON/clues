@@ -313,6 +313,23 @@ clues(obj,'user.3.name')
  }
 ```
 
+Another example of the memoization with `$property` is a simple Fibonacci solver:
+```js
+var fib = {
+  0: 0,
+  1: 1,
+  $property : function(n) {
+    return [''+(n-1),''+(n-2),function(a,b) {
+      return a+b;
+    }];
+  }
+};
+
+clues(fib,['12','14','25','1000',Array])
+  .then(console.log)
+```
+
+
 ### $external property for undefined paths
 If an undefined property can not locate a `$property` function it will look for an `$external` function.   The purpose of the `$external` function is similar except that the argument passed to the function will be the full remaining reference (in dot notation), not just the next reference in the chain.
 
