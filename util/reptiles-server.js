@@ -63,7 +63,7 @@ module.exports = function(api,options) {
           ? clues({},api,$global,'reptiles')
           : Object.create(api);
 
-    var $global = Object.create(options.global || {},{
+    var $global = Object.create(options.$global || {},{
       res : {value: res},
       req : {value: req},
       input: {value: req.body},
