@@ -56,7 +56,7 @@
       if (fn === undefined) {
         if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
-        else if ($global[ref])
+        else if ($global[ref] && caller && caller !== '__user__')
           return clues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
@@ -98,7 +98,7 @@
             res = clues.Promise.resolve($global);
         }
 
-        return res || clues(logic,arg,$global,ref,fullref)
+        return res || clues(logic,arg,$global,ref || 'fn',fullref)
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;

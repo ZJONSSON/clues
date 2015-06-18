@@ -27,7 +27,7 @@ describe('$ as a first letter',function() {
 
   describe('in logic',function() {
     it ('should return a function',function() {
-      clues(Object.create(logic),'$logic_service',Object.create(global))
+      return clues(Object.create(logic),'$logic_service',Object.create(global))
         .then(function($logic_service) {
           assert.equal(typeof $logic_service,'function');
           assert.equal($logic_service(20),20);
@@ -38,7 +38,7 @@ describe('$ as a first letter',function() {
 
   describe('in nested logic',function() {
     it ('should return a function',function() {
-      clues(Object.create(logic),'top.$nested_service',Object.create(global))
+      return clues(Object.create(logic),'top.$nested_service',Object.create(global))
         .then(function($nested_service) {
           assert.equal(typeof $nested_service,'function');
           assert.equal($nested_service(20),30);
@@ -48,11 +48,10 @@ describe('$ as a first letter',function() {
 
   describe('in global',function() {
     it('should return a function',function() {
-      clues(Object.create(logic),'$global_service',Object.create(global))
-        .then(function($logic_service) {
+      return clues(Object.create(logic),function($logic_service) {
           assert.equal(typeof $logic_service,'function');
           assert.equal($logic_service(20),20);
-        });
+        },Object.create(global));
     });
   });
 });

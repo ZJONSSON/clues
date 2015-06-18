@@ -55,7 +55,16 @@ describe('Global variable',function() {
       });
   });
 
-  it('should be applied inside a function',function() {
+  it('can not be applied directly',function() {
+    return clues(facts,'$input',global)
+      .then(function() {
+        throw 'Should Error';
+      },function(e) {
+        assert.equal(e.message,'$input not defined');
+      });
+  });
+
+  it('can not be applied as part of dot notation',function() {
     return clues(facts,'d.c',global)
       .then(function(d) {
         assert.equal(d,29);
