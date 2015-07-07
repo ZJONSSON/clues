@@ -45,7 +45,7 @@
             return clues(logic,ref,$global,caller,fullref);
           })
           .catch(function(e) {
-            if (logic && logic.$external && typeof logic.$external === 'function')
+            if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
               return logic[ref] = clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
             else throw e;
           });
@@ -60,7 +60,7 @@
           return clues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
-        else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller});
+        else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
       }
     }
 
