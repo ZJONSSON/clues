@@ -69,6 +69,7 @@ There are only a few restrictions and conventions you must into account when def
 
 * Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (great for services)
 * [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (if they are functions)
+* Any function named in-line as `$property` or `$external` will act as shorthands
 * `$global` will always return the full global object provided, in any context.
 * `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
@@ -329,6 +330,20 @@ clues(fib,['12','14','25','1000',Array])
   .then(console.log)
 ```
 
+###### Shorthand for `$property`
+Naming a function as `$property` (i.e. setting `Function.name`) acts as a shorthand for creating an empty object with the `$property` defined as the supplied function. The Fibonacci example could be rewritten as follows:
+
+```js
+var fib = function $property(n) {
+  if(n<=1) return +n;
+  return [''+(n-1),''+(n-2),function(a,b) {
+    return a+b;
+  }];
+};
+
+clues(fib,['12','14','25','1000',Array])
+  .then(console.log);
+```
 
 ### $external property for undefined paths
 If an undefined property can not locate a `$property` function it will look for an `$external` function.   The purpose of the `$external` function is similar except that the argument passed to the function will be the full remaining reference (in dot notation), not just the next reference in the chain.
@@ -360,6 +375,20 @@ var obj = Object.create(Logic,{userid:{value:'admin'}});
 clues(obj,['myinfo',console.log))
 
 ```
+
+###### Shorthand for `$external`
+Naming a function as `$external` (i.e. setting `Function.name`) acts as a shorthand for creating an empty object with the `$external` defined as the supplied function.  The `externalApi` function in the previous example could be written as follows:
+
+```js
+...
+   externalApi : function(userid) {
+     return function $external(ref) {
+        ref = ref.replace(/\.h,'/');
+        ....
+     }
+   }
+```
+
 ### function that returns a function that returns a...
 If the resolved value of any function is itself a function, that returned function will also be resolved (within the same scope).  This allows for very powerful 'gateways' that constrains the tree traversal only to segments that are relevant for a particular solutions.
 ```js

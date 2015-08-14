@@ -83,6 +83,10 @@
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.resolve(fn);
 
+    // Shortcuts to define empty objects with $property or $external
+    if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property:fn});
+    if (fn.name == '$external') return logic[ref] = clues.Promise.resolve({$external:fn});
+
     args = (args || matchArgs(fn))
       .map(function(arg) {
         var optional,showError,res;

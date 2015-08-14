@@ -12,20 +12,9 @@ describe('$external',function() {
         return 'simple:'+ref;
       }
     }),
-    funct : function(a) {
-      return {
-        count : 0,
-        $property : function(ref) {
-          this.count+=1;
-          return 'functservice:'+ref;
-        }
-      };
-    },
-    nested : Object.create({
-      $property : function(ref) {
-        return { a : { b: { c: function() { return 'nestedservice'+ref; } } } };
-      }
-    })
+    shorthand : function $external(ref) {
+      return 'answer:'+ref;
+    }
   };
 
   var facts = Object.create(logic);
@@ -68,6 +57,22 @@ describe('$external',function() {
           assert.equal(e.fullref,'simple.STOP');
         });
     });
-    
   });
+
+  describe('when function name is $external',function() {
+    it('acts as a shorthand for empty object with $external',function() {
+      return clues(facts,'shorthand.first')
+        .then(function(d) {
+          assert.equal(d,'answer:first');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          return clues(facts,'shorthand.second');
+        })
+        .then(function(d) {
+          assert.equal(d,'answer:second');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          assert.equal(facts.shorthand.value().second.value(),'answer:second');
+        });
+    });
+  });
+
 });

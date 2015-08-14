@@ -1,4 +1,4 @@
-var instinct = require('../clues'),
+var clues = require('../clues'),
     assert = require('assert');
 
 describe('$property',function() {
@@ -25,6 +25,9 @@ describe('$property',function() {
       $property : function(ref) {
         return { a : { b: { c: function() { return +ref+10; } } } };
       }
+    },
+    shorthand : function $property(ref) {
+      return +ref * 2;
     }
   };
 
@@ -32,7 +35,7 @@ describe('$property',function() {
 
   describe('in simple logic',function() {
     it('runs $property function for non-existent property',function() {
-      return instinct(facts,'simple.1234')
+      return clues(facts,'simple.1234')
       .then(function(d) {
         assert.equal(d,1236);
         assert(facts.simple['1234'].isFulfilled());
@@ -42,7 +45,7 @@ describe('$property',function() {
     });
 
     it('runs $property again for a different property',function() {
-      return instinct(facts,'simple.1235')
+      return clues(facts,'simple.1235')
         .then(function(d) {
           assert.equal(d,1237);
           assert.equal(facts.simple.count,2);
@@ -50,7 +53,7 @@ describe('$property',function() {
     });
 
     it('previous results are cached',function() {
-      return instinct(facts,['simple.1234','simple.1235',function(a,b) {
+      return clues(facts,['simple.1234','simple.1235',function(a,b) {
           assert.equal(a,1236);
           assert.equal(b,1237);
           assert.equal(facts.simple.count,2);
@@ -58,7 +61,7 @@ describe('$property',function() {
     });
 
     it('handles errors correctly',function() {
-      return instinct(facts,'simple.abc',{},'__test__')
+      return clues(facts,'simple.abc',{},'__test__')
         .then(function() {
           throw 'Should Error';
         },function(e) {
@@ -75,7 +78,7 @@ describe('$property',function() {
 
   describe('inside a function',function() {
     it('runs $property function for non-existent property',function() {
-      return instinct(facts,'funct.1234')
+      return clues(facts,'funct.1234')
         .then(function(d) {
           assert.equal(d,1239);
           assert.equal(facts.funct.value().count,1);
@@ -83,7 +86,7 @@ describe('$property',function() {
     });
 
     it('caches previous results',function() {
-      return instinct(facts,'funct.1234')
+      return clues(facts,'funct.1234')
         .then(function(d) {
           assert.equal(d,1239);
           assert.equal(facts.funct.value().count,1);
@@ -93,7 +96,7 @@ describe('$property',function() {
   
   describe('inside a nested structure',function() {
     it('runs $property',function() {
-      return instinct(facts,'nested.1234.a.b.c')
+      return clues(facts,'nested.1234.a.b.c')
       .then(function(d) {
         assert.equal(d,1244);
         assert(facts.nested['1234'].value().a.b.c.isFulfilled());
@@ -102,7 +105,7 @@ describe('$property',function() {
     });
 
     it('handles error correctly',function() {
-      return instinct(facts,'nested.1234.a.b.d',{},'__test__')
+      return clues(facts,'nested.1234.a.b.d',{},'__test__')
         .then(function() {
           throw 'Should error';
         },function(e) {
@@ -112,4 +115,21 @@ describe('$property',function() {
         });
     });
   });
+
+  describe('when function name is $property',function() {
+    it('acts as a shorthand for empty object with $property',function() {
+      return clues(facts,'shorthand.2')
+        .then(function(d) {
+          assert.equal(d,4);
+          assert.equal(facts.shorthand.value()['2'].value(),4);
+          return clues(facts,'shorthand.4');
+        })
+        .then(function(d) {
+          assert.equal(d,8);
+          assert.equal(facts.shorthand.value()['4'].value(),8);
+          assert.equal(facts.shorthand.value()['2'].value(),4);
+        });
+    });
+  });
+
 });
