@@ -75,7 +75,14 @@ module.exports = function(api,options) {
         return clues(facts,ref,$global,'__user__')
           .catch(stringifyError)
           .then(function(d) {
-            if (d === undefined) d = null;
+            if (options.single) {
+              _res.end(JSON.stringify(d,jsonReplacer,pretty));
+              _res.write = noop;
+              _res.end = noop;
+              return;
+            }
+            if (d === undefined)
+              d = null;
             for (var key in d) d[key] = d[key];
             var txt = {};
             txt[ref] = d;
