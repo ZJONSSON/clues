@@ -14,6 +14,9 @@ describe('$external',function() {
     }),
     shorthand : function $external(ref) {
       return 'answer:'+ref;
+    },
+    shorthandThis : function $external() {
+      return this;
     }
   };
 
@@ -71,6 +74,12 @@ describe('$external',function() {
           assert.equal(d,'answer:second');
           assert.equal(facts.shorthand.value().first.value(),'answer:first');
           assert.equal(facts.shorthand.value().second.value(),'answer:second');
+        });
+    });
+    it('assumes this of the parent',function() {
+      return clues(facts,'shorthandThis.test')
+        .then(function(d) {
+          assert.equal(d,facts);
         });
     });
   });

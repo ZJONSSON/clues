@@ -27,7 +27,7 @@ describe('$property',function() {
       }
     },
     shorthand : function $property(ref) {
-      return +ref * 2;
+      return +ref * this.a;
     }
   };
 
@@ -120,14 +120,14 @@ describe('$property',function() {
     it('acts as a shorthand for empty object with $property',function() {
       return clues(facts,'shorthand.2')
         .then(function(d) {
-          assert.equal(d,4);
-          assert.equal(facts.shorthand.value()['2'].value(),4);
+          assert.equal(d,10);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
           return clues(facts,'shorthand.4');
         })
         .then(function(d) {
-          assert.equal(d,8);
-          assert.equal(facts.shorthand.value()['4'].value(),8);
-          assert.equal(facts.shorthand.value()['2'].value(),4);
+          assert.equal(d,20);
+          assert.equal(facts.shorthand.value()['4'].value(),20);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
         });
     });
   });

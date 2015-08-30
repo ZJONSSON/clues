@@ -84,8 +84,8 @@
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.resolve(fn);
 
     // Shortcuts to define empty objects with $property or $external
-    if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property:fn});
-    if (fn.name == '$external') return logic[ref] = clues.Promise.resolve({$external:fn});
+    if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
+    if (fn.name == '$external') return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
 
     args = (args || matchArgs(fn))
       .map(function(arg) {
