@@ -2,7 +2,10 @@
 
 *[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions.  Other libraries exploring similar concepts include  [curran/reactive-model](https://github.com/curran/reactive-model) and [ZJONSSON/instinct](https://github.com/ZJONSSON/instinct.js)*
 
+#### Changes from 3.2.x
+* Any javascript function explicitly named `private` will [not be accessible directly](#making-anonymous-functions-private)
 
+#### Function signature
 The basic function signature is simple and **always** returns a promise:
 #### `clues(obj,fn,[$global])`
 ##### logic/facts (first argument)
@@ -74,6 +77,7 @@ There are only a few restrictions and conventions you must into account when def
 * `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
+* Any function explicitly named [`private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
 
 That's pretty much it.
 
@@ -424,7 +428,6 @@ var User = {
     }
 ```
 Unauthorized users will get an error if they try to query any of the admin functions, while admins have unlimited access.    
-
 #### using first element to define private scope
 But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?   Array defined functions can be used to form gateways from one tree into a subtree of another.  If the first element of an array-defined function is an object (and not an array) or a function, that object provides a separate scope the function will be evaluated in.  The function can therefore act as a selector from this private scope.
 
@@ -447,10 +450,10 @@ var PrivateLogic  = {
 
 var Logic = {
   user : function(_userid,_password) {
-    var private = Object.create(PrivateLogic);
-    private.userid = _userid;
-    private.password = _password;
-    return [private,'public',Object];
+    var privateObj = Object.create(PrivateLogic);
+    privateObj.userid = _userid;
+    privateObj.password = _password;
+    return [privateObj,'public',Object];
   }
 };
 
@@ -467,9 +470,9 @@ In this example `user.info` points to an instance of `PrivateLogic.public` witho
 
 The gateway function could have been with argument names inside or outside the function, even extra arguments.  What really matters is what the gateway function returns:
 ```js
-return [private,function(public) { return public;}];
-return [private,function(public,hash,secret) { return public;}];
-return [private,'public','hash',function(a,b) { return a;}];
+return [privateObj,function(public) { return public;}];
+return [privateObj,function(public,hash,secret) { return public;}];
+return [privateObj,'public','hash',function(a,b) { return a;}];
 
 ```
 
@@ -478,6 +481,19 @@ Similarly, a private scope can be generated in-line using a function:
 { answer: [function() { return { a : function(b) { return b+1;}, b:41};},'a',Number])}
 ```
 where `answer.a` = 42, but `b` is unreachable
+
+#### making anonymous functions private
+An even easier way to declare functions as private is simply [naming](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name) them `private`.  Any functions named `private` will not be accessible directly, only indirectly through a different function, as an input argument.  Specifically the  `caller` has to be a defined value and not equal to `__user__`).  Here is a quick example:
+
+```js
+var facts = {
+  a : function private() { return 2; },
+  b : function(a) { return a+2; }
+};
+
+clues(facts,'b').then(console.log) // prints 4
+clues(facts,'a').catch(console.log)  // prints error
+```
 
 ### Cancellability
 Each promise chain is cancellable, but the ability to cancel only reaches those logic functions that explicitly return cancellable promises. Any logic already resolved before a cancel is issued, will not be affected.  Here is a pseudo example of how such cancellation could be incorporated with an expensive database query:

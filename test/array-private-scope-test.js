@@ -8,7 +8,7 @@ describe('Array fn private scope',function() {
 
   describe('With only array logic',function() {
 
-    function private() {
+    function privateObj() {
       return {
         answer : function(forty,two) {
           return forty+two;
@@ -27,27 +27,27 @@ describe('Array fn private scope',function() {
     };
 
     it('works without array arguments',function() {
-      var obj = private();
+      var obj = privateObj();
       return clues(null,[obj,function(answer) {
         assert.equal(answer,42);
       }]);
     });
 
     it('works with array arguments',function() {
-      var obj = private();
+      var obj = privateObj();
       return clues({},[obj,'answer',function(d) {
         assert.equal(d,42);
       }]);
     });
 
     it('works with private scope defined from function',function() {
-      return clues({},[private,function(answer) {
+      return clues({},[privateObj,function(answer) {
         assert.equal(answer,42);
       }]);
     });
 
     it('handles errors correctly',function() {
-      return clues({},[private,'err',String])
+      return clues({},[privateObj,'err',String])
         .then(function() { console.log(arguments);throw 'Should Error';},function(e) {
           assert.equal(e.ref,'err');
           assert.equal(e.fullref,'err');
@@ -56,7 +56,7 @@ describe('Array fn private scope',function() {
     });
 
     it('works recursively',function() {
-      return clues({},[Object.create(pub),[['M1',Number],['M2',Number],[private(),'forty',Number],Array],function(d) {
+      return clues({},[Object.create(pub),[['M1',Number],['M2',Number],[privateObj(),'forty',Number],Array],function(d) {
         assert.deepEqual(d,[100,200,40]);
       }]);
     });
