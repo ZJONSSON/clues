@@ -1,6 +1,9 @@
 var clues = require('../clues'),
     Promise = require('bluebird');
 
+// We need to remove the default toJSON to see if a promise is private or not
+delete Promise.prototype.toJSON;
+
 function jsonReplacer(key, value) {
   if (!value || value instanceof Date) return value;
   if (typeof value === 'function' && value.name === 'private') return undefined;
