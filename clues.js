@@ -32,7 +32,7 @@
         });
       
     if (typeof fn === 'string') {
-      ref = fn;
+      ref = fn.replace(/ᐅ/g,'.');
     
       var dot = ref.indexOf('.');
       if (dot > -1 && logic[ref] === undefined) {

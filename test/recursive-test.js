@@ -54,12 +54,27 @@ describe('In recursive logic',function() {
     });
   });
 
+  it('ᐅ works as an alias for dot',function() {
+    return clues(facts,'mediumᐅbucketᐅvalue')
+      .then(function(value) {
+        assert.equal(value,10);
+      })
+  })
+
   describe('complex nesting',function() {
     it('works', function() {
       return clues(facts,'hard.a.b.c.d.id').then(function(value) {
         assert.equal(value,102);
       });
     });
+
+    it('ᐅ works as an alias for dot',function() {
+      var facts2 = Object.create(logic);
+      return clues(facts,'hardᐅaᐅbᐅcᐅdᐅid')
+        .then(function(value) {
+          assert.equal(value,102);
+        });
+    })
 
     it('works on returned functions',function() {
       return clues(facts,'hard.a.b.c.d.e.h')
