@@ -32,9 +32,9 @@
         });
       
     if (typeof fn === 'string') {
-      ref = fn.replace(/ᐅ/g,'.');
+      ref = fn;
     
-      var dot = ref.indexOf('.');
+      var dot = ref.search(/ᐅ|\./);
       if (dot > -1 && logic[ref] === undefined) {
         var next = ref.slice(0,dot);
         return clues(logic,next,$global,caller,fullref)
