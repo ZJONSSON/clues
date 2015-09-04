@@ -135,10 +135,12 @@
         throw e;
       });
 
-    if (ref) {
+    if (fn.name == 'private')
+      value.private = true;
+
+    if (ref)
       logic[ref] = value;
-      if (fn.name == 'private') logic[ref].private = true;
-    }  
+
     return value;
   }
 
