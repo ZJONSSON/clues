@@ -4,14 +4,26 @@ var clues = require('../clues'),
 // We need to remove the default toJSON to see if a promise is private or not
 delete Promise.prototype.toJSON;
 
-function jsonReplacer(key, value) {
-  if (!value || value instanceof Date) return value;
-  if (typeof value === 'function' && value.name === 'private') return undefined;
-  if (typeof value === 'function' || value.length && typeof value[value.length-1] === 'function')
-    return '[Function]';
-  if (typeof value.then === 'function' || value.isFulfilled !== undefined)
-    return (!value.private) ? '[Promise]' : undefined;
-  return value;
+function stringify(obj,pretty) {
+  var cache = [];
+
+  function jsonReplacer(key, value) {
+    if (!value || value instanceof Date) return value;
+    if (typeof value === 'function' && value.name === 'private') return undefined;
+    if (typeof value === 'function' || value.length && typeof value[value.length-1] === 'function')
+      return '[Function]';
+    if (typeof value.then === 'function' || value.isFulfilled !== undefined)
+      return (!value.private) ? '[Promise]' : undefined;
+
+    if (typeof value === 'object') {
+      if (cache.indexOf(value) !== -1)
+        return '[Circular]';
+      cache.push(value);
+    }
+    return value;
+  }
+
+  return JSON.stringify(obj,jsonReplacer,pretty);
 }
 
 function noop() {}
@@ -80,7 +92,7 @@ module.exports = function(api,options) {
           .catch(stringifyError)
           .then(function(d) {
             if (options.single) {
-              _res.end(JSON.stringify(d,jsonReplacer,pretty));
+              _res.end(stringify(d,pretty));
               _res.write = noop;
               _res.end = noop;
               return;
@@ -90,7 +102,7 @@ module.exports = function(api,options) {
             for (var key in d) d[key] = d[key];
             var txt = {};
             txt[ref] = d;
-            txt = first+JSON.stringify(txt,jsonReplacer,pretty);
+            txt = first+stringify(txt,pretty);
             first = '';
             _res.write(txt.slice(1,txt.length-1)+',\t\n');
             if (typeof(res.flush) == 'function') _res.flush();
