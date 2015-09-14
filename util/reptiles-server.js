@@ -92,7 +92,7 @@ module.exports = function(api,options) {
           .catch(stringifyError)
           .then(function(d) {
             if (options.single) {
-              _res.end(stringify(d,pretty));
+              _res.send(d.error ? 500 : 200, stringify(d,pretty));
               _res.write = noop;
               _res.end = noop;
               return;
