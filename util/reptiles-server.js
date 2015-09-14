@@ -40,7 +40,7 @@ module.exports = function(api,options) {
       });
     if (e.stack && !options.debug) {
       err.message = 'Internal Error';
-      delete e.stack;
+      delete err.stack;
     }
     return err;
   }
