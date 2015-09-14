@@ -1,3 +1,8 @@
+[![NPM Version][npm-image]][npm-url]
+[![NPM Downloads][downloads-image]][downloads-url]
+[![Test Coverage][circle-image]][circle-url]
+
+
 **clues.js** is a lean-mean-promisified-getter-machine that crunches through any javascript objects, including complex trees,  functions, values and promises.  Clues consists of a single getter function (just over 100 loc) that dynamically resolves dependency trees and memoizes resolutions (lets call them derived facts) along the way.   
 
 *[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions.  Other libraries exploring similar concepts include  [curran/reactive-model](https://github.com/curran/reactive-model) and [ZJONSSON/instinct](https://github.com/ZJONSSON/instinct.js)*
@@ -589,3 +594,10 @@ clues(facts,'Charlie.John',{$root:facts})
   .then(console.log);
 ```
 The main reason why a `$root` is not set automatically by `clues` is that there is no real concept of a top-level object.  You can run `clues` on any subsection of a tree without knowing anything about possible parents (which could be multiple)
+
+[npm-image]: https://img.shields.io/npm/v/clues.svg
+[npm-url]: https://npmjs.org/package/clues
+[circle-image]: https://circleci.com/gh/ZJONSSON/clues.png?style=shield
+[circle-url]: https://circleci.com/gh/ZJONSSON/clues/tree/master
+[downloads-image]: https://img.shields.io/npm/dm/clues.svg
+[downloads-url]: https://npmjs.org/package/clues
