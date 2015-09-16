@@ -38,9 +38,12 @@ module.exports = function(api,options) {
       .forEach(function(key) {
         err[key] = e[key];
       });
-    if (e.stack && !options.debug) {
-      err.message = 'Internal Error';
-      delete err.stack;
+    if (e.stack) {
+      err.status = 500;
+      if (!options.debug) {
+        err.message = 'Internal Error';
+        delete err.stack;
+      }
     }
     return err;
   }
@@ -92,7 +95,7 @@ module.exports = function(api,options) {
           .catch(stringifyError)
           .then(function(d) {
             if (options.single) {
-              _res.send(d.error ? 500 : 200, stringify(d,pretty,options.debug)+'\n');
+              _res.send(d.error ? (d.status||400) : 200, stringify(d,pretty,options.debug)+'\n');
               _res.write = noop;
               _res.end = noop;
               return;
