@@ -18,6 +18,12 @@ function stringify(obj,pretty,debug) {
     if (typeof value === 'object') {
       if (cache.indexOf(value) !== -1)
         return '[Circular]';
+
+      var p = Object.getPrototypeOf(value);
+      if (p !== Object.prototype && p !== Array.prototype)
+        for (key in value)
+          value[key] = value[key];
+
       cache.push(value);
     }
     return value;
@@ -102,7 +108,7 @@ module.exports = function(api,options) {
             }
             if (d === undefined)
               d = null;
-            for (var key in d) d[key] = d[key];
+
             var txt = {};
             txt[ref] = d;
             txt = first+stringify(txt,pretty,options.debug);
