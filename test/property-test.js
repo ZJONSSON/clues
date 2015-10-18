@@ -28,7 +28,14 @@ describe('$property',function() {
     },
     shorthand : function $property(ref) {
       return +ref * this.a;
-    }
+    },
+    concurrent : {
+      $property : function() {
+      return clues.Promise.delay(Math.random()*1000)
+        .then(function() {
+          return new Date();
+        });
+    }}
   };
 
   var facts = Object.create(logic);
@@ -42,6 +49,20 @@ describe('$property',function() {
         assert.equal(facts.simple['1234'].value(),1236);
         assert.equal(facts.simple.count,1);
       });
+    });
+
+    it('concurrent requests should return first response',function() {
+      var requests = Array.apply(null, {length: 10})
+        .map(function() {
+          return clues(facts,'concurrent.test');
+        });
+      
+      return clues.Promise.all(requests)
+        .then(function(d) {
+          return d.map(function(e) {
+            assert.equal(e,d[0],'Return time should be the same');
+          });
+        });
     });
 
     it('runs $property again for a different property',function() {
