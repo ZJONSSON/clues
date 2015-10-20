@@ -35,7 +35,7 @@
       ref = fn;
     
       var dot = ref.search(/ᐅ|\./);
-      if (dot > -1 && logic[ref] === undefined) {
+      if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
         return clues(logic,next,$global,caller,fullref)
           .then(function(d) {
