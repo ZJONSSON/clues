@@ -35,7 +35,7 @@
       ref = fn;
     
       var dot = ref.search(/ᐅ|\./);
-      if (dot > -1 && logic[ref] === undefined) {
+      if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
         return clues(logic,next,$global,caller,fullref)
           .then(function(d) {
@@ -52,9 +52,9 @@
       }
 
       fullref = (fullref ? fullref+'.' : '')+ref;
-      fn = logic[ref];
+      fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
-        if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
+        if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref] && caller && caller !== '__user__')
           return clues($global,ref,$global,caller,fullref);
@@ -119,7 +119,7 @@
 
     var value = inputs
       .then(function(args) {
-        return fn.apply(logic, args);
+        return fn.apply(logic || {}, args);
       })
       .then(function(d) {
         return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
