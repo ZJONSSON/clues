@@ -52,7 +52,7 @@
       }
 
       fullref = (fullref ? fullref+'.' : '')+ref;
-      fn = logic[ref];
+      fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
         if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
