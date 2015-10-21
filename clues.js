@@ -54,7 +54,7 @@
       fullref = (fullref ? fullref+'.' : '')+ref;
       fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
-        if (typeof(logic) === 'object' && Object.getPrototypeOf(logic)[ref] !== undefined)
+        if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref] && caller && caller !== '__user__')
           return clues($global,ref,$global,caller,fullref);
