@@ -119,7 +119,7 @@
 
     var value = inputs
       .then(function(args) {
-        return fn.apply(logic, args);
+        return fn.apply(logic || {}, args);
       })
       .then(function(d) {
         return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
