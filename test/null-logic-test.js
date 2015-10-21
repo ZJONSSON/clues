@@ -4,8 +4,7 @@
 function shouldError(e) { throw 'Should error '+e;}
 function notDefined(e) { assert.deepEqual(e.message,'test not defined'); }
 
-[null,undefined,4,'a',0,Object,Array,Object.prototype].forEach(function(nothing) {
-//  [Object.prototype].forEach(function(nothing) {
+[null,undefined,4,'a',0,Object,Array,Object].forEach(function(nothing) {
   describe('with value '+String(nothing),function() {
     describe(' as logic',function() {
 
@@ -26,6 +25,12 @@ function notDefined(e) { assert.deepEqual(e.message,'test not defined'); }
           else
             assert.deepEqual(this,{});
         });
+      });
+
+      it('property fallback to global (if exists)',function() {
+        return clues(nothing,function(test) {
+          assert.equal(test,'global');
+        },{test:'global'});
       });
     });
 
