@@ -46,9 +46,15 @@ module.exports = function(api,options) {
       });
     if (e.stack) {
       err.status = 500;
+      if (typeof options.logger === 'function')
+        options.logger(err);
+      
       if (!options.debug) {
-        err.message = 'Internal Error';
-        delete err.stack;
+        err = {
+          error : true,
+          message : 'Internal Error',
+          status : 500
+        };
       }
     }
     return err;
