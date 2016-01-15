@@ -4,7 +4,7 @@ var clues = require('../clues'),
 
 describe('facts',function() {
   var logic = {
-    response : function() { return Promise.delay(42,500);},
+    response : function() { return Promise.delay(500,42);},
     other : function() { return 5; }
   };
 
