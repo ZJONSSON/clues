@@ -114,13 +114,18 @@
           });
       });
 
-    var inputs =  clues.Promise.all(args);
+    var inputs =  clues.Promise.all(args),
+        wait = new Date(),
+        duration;
 
     var value = inputs
       .then(function(args) {
+        duration = new Date();
         return fn.apply(logic || {}, args);
       })
       .then(function(d) {
+        if (typeof $global.$duration === 'function')
+          $global.$duration(fullref,[(new Date()-duration),(new Date())-wait]);
         return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
       },function(e) {
         if (typeof e !== 'object')
