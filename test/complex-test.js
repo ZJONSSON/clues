@@ -5,10 +5,10 @@ var clues = require('../clues'),
 describe('complex tree',function() {
 
   var logic = {
-    M1 : function() { return Promise.delay(10,100); },
-    M2 : function() { return Promise.delay(300,20); },
+    M1 : function() { return Promise.delay(100,10); },
+    M2 : function() { return Promise.delay(20,300); },
     M3 : function(M1,M2) { return M1+M2; },
-    M4 : function() { return Promise.delay(70,150); },
+    M4 : function() { return Promise.delay(150,70); },
     MTOP : function(
       M3,
       M4
