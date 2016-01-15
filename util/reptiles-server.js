@@ -79,17 +79,22 @@ module.exports = function(api,options) {
         req.body[key] = req.params[key];
       });
 
+    var duration = {};
+
     var $global = Object.create(options.$global || {},{
       res : {value: res},
       req : {value: req},
-      input: {value: req.body}
+      input: {value: req.body},
+      $duration : {value: function(ref,time) {
+        duration[ref] = time;
+      }}
     });
 
     var facts;
     if (typeof(api) === 'object' && !api.length)
       facts = Object.create(api);
     else
-      facts = clues({},api,$global,'reptiles');
+      facts = clues({},api,$global,'__user__');
 
     $global.root = facts;
     
@@ -127,6 +132,13 @@ module.exports = function(api,options) {
 
     return Promise.all(data)
       .then(function() {
+        if (options.debug) {
+          var txt = {
+            $debug : duration
+          };
+          txt = stringify(txt,pretty,options.debug);
+          _res.write(txt.slice(1,txt.length-1)+',\t\n');
+        }
         _res.write('"__end__" : true\t\n}');
         res.end();
       });
