@@ -115,7 +115,6 @@
       });
 
     var inputs =  clues.Promise.all(args);
-    if (inputs.cancellable) inputs = inputs.cancellable();
 
     var value = inputs
       .then(function(args) {
@@ -124,8 +123,6 @@
       .then(function(d) {
         return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
       },function(e) {
-        if (e.name && e.name == 'CancellationError')
-          return args.forEach(function(arg) { arg.cancel(); });
         if (typeof e !== 'object')
           e = { message : e};
         e.error = true;
@@ -142,6 +139,7 @@
       logic[ref] = value;
 
     return value;
+    
   }
 
 })(this);
