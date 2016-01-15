@@ -51,7 +51,7 @@
           });
       }
 
-      fullref = (fullref ? fullref+'.' : '')+ref;
+      fullref = (fullref ? fullref+'^' : '')+ref;
       fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
