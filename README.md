@@ -7,8 +7,8 @@
 
 *[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions.  Other libraries exploring similar concepts include  [curran/reactive-model](https://github.com/curran/reactive-model) and [ZJONSSON/instinct](https://github.com/ZJONSSON/instinct.js)*
 
-#### Changes from 3.2.x
-* Any javascript function explicitly named `private` will [not be accessible directly](#making-anonymous-functions-private)
+#### Changes in version 4.x
+* Upgrade Bluebird 3.x affects cancellation mechanics
 
 #### Function signature
 The basic function signature is simple and **always** returns a promise:
@@ -43,7 +43,7 @@ The third argument is an optional [global object](#global-variables), whose prop
 `clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
 
 ##### caller and fullref (internal)
-As clues traverses an object by recursively calling itself each step of the way it passes information about `caller`,  i.e. which reference is requesting each property and `fullref` a dot delimited list of the traversed dependency path so far.
+As clues traverses an object by recursively calling itself each step of the way it passes information about `caller`,  i.e. which reference is requesting each property and `fullref` a delimited list of the traversed dependency path so far. A caret (`^`) in the fullref path  denotes a dependency relationship (through function argument) whereas a dot (`.`) signals parent-child traversal.
 
 The full function signature (with the internal arguments)  is therefore:
 `function clues(obj,fn,[$global],[caller],[fullref]) {...`
@@ -513,19 +513,21 @@ clues(facts,'a').catch(console.log)  // prints error
 ```
 
 ### Cancellability
-Each promise chain is cancellable, but the ability to cancel only reaches those logic functions that explicitly return cancellable promises. Any logic already resolved before a cancel is issued, will not be affected.  Here is a pseudo example of how such cancellation could be incorporated with an expensive database query:
+Each promise chain is cancellable when cancellation is turned on in the [Bluebird config](http://bluebirdjs.com/docs/api/promise.config.html).  Here is a pseudo example of how cancellation can be incorporated into an expensive database query:
 ```js
+clues.Promise.config({cancellable: true});
+
 logic.transactions = function(userid) {
   var connection = db.connect({host:...,});
-  return new Promise(function(resolve,reject) {
+  return new Promise(function(resolve,reject,onCancel) {
     connection.get({'userid':userid}, function(err,d) {
       if (err) return reject(err);
       else resolve(JSON.stringify(d));
     });
-  })
-  .cancellable()
-  .catch(Promise.CancellationError,function() {
-    connection.close();
+
+    onCancel && onCancel(function() {
+      connection.close();
+    })
   });
 }
 ...
