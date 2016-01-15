@@ -111,7 +111,7 @@ describe('In recursive logic',function() {
           throw 'We should not arrive here';
         },function(e) {
           assert.equal(e.ref, 'i');
-          assert.equal(e.fullref, 'hard.a.b.c.d.i');
+          assert.equal(e.fullref, 'hard.a.b.c.d^i');
         });
     });
 

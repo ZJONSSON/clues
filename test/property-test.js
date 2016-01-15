@@ -88,7 +88,7 @@ describe('$property',function() {
         },function(e) {
           assert.equal(e.message,'NOT_A_NUMBER');
           assert.equal(e.ref,'abc');
-          assert.equal(e.fullref,'simple.abc');
+          assert.equal(e.fullref,'simple^abc');
           assert.equal(e.caller,'__test__');
           assert.equal(facts.simple.abc.isRejected(),true);
           assert.equal(facts.simple.abc.reason().message,'NOT_A_NUMBER');
@@ -130,8 +130,9 @@ describe('$property',function() {
         .then(function() {
           throw 'Should error';
         },function(e) {
+          console.log('got error',e)
           assert.equal(e.ref,'d');
-          assert.equal(e.fullref,'nested.1234.a.b.d');
+          assert.equal(e.fullref,'nested.1234.a.b^d');
           assert.equal(e.caller,'__test__');
         });
     });

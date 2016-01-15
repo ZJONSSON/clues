@@ -109,7 +109,7 @@ describe('Array fn private scope',function() {
           assert.equal(e.ref,'userid');
           assert.equal(e.message,'userid not defined');
           assert.equal(e.caller,'hash');
-          assert.equal(e.fullref,'info.public.hash.userid');
+          assert.equal(e.fullref,'info^public^hash^userid');
         });
     });
   });

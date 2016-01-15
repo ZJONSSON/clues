@@ -64,14 +64,14 @@ describe('$fullref',function() {
   it('direct call shows fullref',function() {
     return clues(obj,'a.b.fullref')
       .then(function(fullref) {
-        assert.equal(fullref,'a.b.fullref');
+        assert.equal(fullref,'a.b^fullref');
       });
   });
 
   it('indirect call shows fullref',function() {
     return clues(obj,'fullref')
       .then(function(fullref) {
-        assert.equal(fullref,'fullref.a.b.fullref');
+        assert.equal(fullref,'fullref.a.b^fullref');
       });
   });
 

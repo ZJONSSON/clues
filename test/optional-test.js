@@ -76,7 +76,7 @@ describe('optional argument',function() {
         .then(function(e) {
           assert.equal(e.error,true);
           assert.equal(e.message,'#Error');
-          assert.equal(e.fullref,'showerror.error');
+          assert.equal(e.fullref,'showerror^error');
           assert.equal(e.ref,'error');
         });
     });
