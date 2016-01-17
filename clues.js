@@ -126,7 +126,7 @@
       .then(function(d) {
         if (typeof $global.$duration === 'function')
           $global.$duration(fullref,[(new Date()-duration),(new Date())-wait]);
-        return typeof d == 'string' ? d : clues(logic,d,$global,caller,fullref);
+        return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
       },function(e) {
         if (typeof e !== 'object')
           e = { message : e};
