@@ -20,15 +20,15 @@
     return fn.__args__;
   }
 
-  function clues(logic,fn,$global,caller,fullref) {
+  function clues(logic,fn,$global,caller,fullref,dependencies) {
     var args,ref;
 
     if (!$global) $global = {};
 
     if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
-      return clues({},logic,$global,caller,fullref)
+      return clues({},logic,$global,caller,fullref,dependencies)
         .then(function(logic) {
-          return clues(logic,fn,$global,caller,fullref);
+          return clues(logic,fn,$global,caller,fullref,dependencies);
         });
       
     if (typeof fn === 'string') {
@@ -37,12 +37,12 @@
       var dot = ref.search(/ᐅ|\./);
       if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
-        return clues(logic,next,$global,caller,fullref)
+        return clues(logic,next,$global,caller,fullref,dependencies)
           .then(function(d) {
             logic = d;
             ref = ref.slice(dot+1);
             fullref = (fullref ? fullref+'.' : '')+next;
-            return clues(logic,ref,$global,caller,fullref);
+            return clues(logic,ref,$global,caller,fullref,dependencies);
           })
           .catch(function(e) {
             if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
@@ -57,7 +57,7 @@
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref] && caller && caller !== '__user__')
-          return clues($global,ref,$global,caller,fullref);
+          return clues($global,ref,$global,caller,fullref,dependencies);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
         else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
@@ -70,7 +70,7 @@
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
-        return clues(obj,fn,$global,caller,fullref);
+        return clues(obj,fn,$global,caller,fullref,dependencies);
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];
@@ -86,7 +86,11 @@
      return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || (ref && ref[0] === '$')) return clues.Promise.resolve(fn);
+    if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
+      if (fn && dependencies && dependencies.indexOf(fn) !== -1)
+        return clues.Promise.rejected({ref: ref, message: 'recursive', fullref: fullref, caller: caller});
+      return clues.Promise.resolve(fn);
+    }
 
     // Shortcuts to define empty objects with $property or $external
     if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
@@ -107,7 +111,11 @@
             res = clues.Promise.resolve($global);
         }
 
-        return res || clues(logic,arg,$global,ref || 'fn',fullref)
+        return res || clues.Promise.resolve()
+          .then(function() {
+            dependencies = !clues.ignoreRecursive && (dependencies || []).concat(value);
+            return clues(logic,arg,$global,ref || 'fn',fullref,dependencies);
+          })
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;
@@ -126,7 +134,7 @@
       .then(function(d) {
         if (typeof $global.$duration === 'function')
           $global.$duration(fullref,[(new Date()-duration),(new Date())-wait]);
-        return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
+        return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref,dependencies);
       },function(e) {
         if (typeof e !== 'object')
           e = { message : e};

@@ -541,6 +541,33 @@ express()
       transactions.cancel();
     });
 ```
+
+### Circular dependencies
+Clues keeps a running list of dependencies for each permutation and rejects any dependency path that is recursive.  This allows for interesting patterns where potentially recursive paths are optional - allowing clues to figure out the paths that work depending on the data.
+
+In the following example `mph` is either `mpm *60` (if mpm is available) or `miles / hours` (if mpm is not available).   Conversely `mpm` is either `mph / 60` (if mph is available) or `miles / hours / 60` (if mph is not available).   
+
+```js
+ var logic = {
+    mph : function(_mpm) { 
+      if (_mpm) return _mpm * 60;
+      else return function(miles,hours) {
+        return miles / hours;
+      };
+    },
+    mpm : function(_mph) {
+      if (_mph) return _mph / 60;
+      return function(miles,hours) {
+        return miles / hours / 60;
+      };
+    },
+  };
+```
+
+Solving for `mph` with miles and hours will fail solving for `mpm` (recursive error), but as this input is optional, the function will move on to return  `miles / hours`.   Solving for `mph` with `mpm` set to a number will return `mpm * 60`.  (see [test/recursion-error-test.js](test/recursion-error-test.js)) 
+
+Logic trees can therefore be designed to be greedily recursive, allowing the particular facts for each instance to determine which logic paths are valid and which ones are dead ends.
+
 ### moar stuff A: listening to your parents
 
 The dot notation only works downwards from current scope.  But what if you require variables from the parent scopes?   There are few ways to accomplish this.  One is to simply pass the required value through the functional scope of a peer or the required input:

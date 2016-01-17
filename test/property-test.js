@@ -130,7 +130,6 @@ describe('$property',function() {
         .then(function() {
           throw 'Should error';
         },function(e) {
-          console.log('got error',e)
           assert.equal(e.ref,'d');
           assert.equal(e.fullref,'nested.1234.a.b^d');
           assert.equal(e.caller,'__test__');
