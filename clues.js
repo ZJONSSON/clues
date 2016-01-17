@@ -105,8 +105,7 @@
     if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
     if (fn.name == '$external') return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
 
-    args = (args || matchArgs(fn))
-      .map(function(arg) {
+    args = clues.Promise.map(args || matchArgs(fn),function(arg) {
         var optional,showError,res;
         if (optional = (arg[0] === '_')) arg = arg.slice(1);
         if (showError = (arg[0] === '_')) arg = arg.slice(1);
@@ -120,7 +119,10 @@
             res = clues.Promise.resolve($global);
         }
 
-        return res || clues(logic,arg,$global,ref || 'fn',fullref)
+        return res || clues.Promise.resolve()
+          .then(function() {
+            return clues(logic,arg,$global,ref || 'fn',fullref);
+          })
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;
