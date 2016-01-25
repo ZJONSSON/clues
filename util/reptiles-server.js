@@ -4,7 +4,7 @@ var clues = require('../clues'),
 // We need to remove the default toJSON to see if a promise is private or not
 delete Promise.prototype.toJSON;
 
-function stringify(obj,pretty,debug) {
+function defaultStringify(obj, pretty, debug) {
   var cache = [];
 
   function jsonReplacer(key, value) {
@@ -37,6 +37,7 @@ function noop() {}
 module.exports = function(api,options) {
   api = api || {};
   options = options || {};
+  var stringify = typeof options.stringify === 'function' ? options.stringify : defaultStringify;
 
   function stringifyError(e) {
     var err = {error: true};

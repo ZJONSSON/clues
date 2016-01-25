@@ -6,6 +6,7 @@ The server is initialized by providing base logic and optionally some options `f
 Available options are:
 * `safe` : Disregards any input that would otherwise overwrite a logic function with same name
 * `debug` Provide debug information with error messages
+* `stringify` Use provided stringify function instead of default
 
 The initialized server is a function that can be placed into `express` paths.  If no arguments are given to the function, the API access is unrestricted, with requested variables (comma-delimited) in the `req.param.fn`.  If a specific array of values is given to the function, it will solve those variables only.  The user must provide all the inputs either as a JSON blob in the body and/or as querystring variables.
 
