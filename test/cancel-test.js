@@ -1,68 +1,84 @@
 var clues = require('../clues'),
-    Promise = require('bluebird'),
+    Promise = clues.Promise,
     assert = require('assert');
+
+Promise.config({cancellation:true});
 
 describe('cancellation',function() {
   var cancel = {};
 
   var logic = {
     M1 : function() {
-      return Promise
-        .delay(10,130)
-        .cancellable()
-        .catch(Promise.CancellationError,function() {
+      return new Promise(function(resolve,reject,onCancel) {
+        onCancel(function() {
           cancel.M1 = true;
         });
+
+        setTimeout(function() {
+          resolve(10);
+        },130);
+      });
     },
+
     M2 : function() {
-      return Promise
-        .delay(50,170)
-        .cancellable()
-        .catch(Promise.CancellationError,function() {
+      return new Promise(function(resolve,reject,onCancel) {
+        onCancel(function() {
           cancel.M2 = true;
         });
+
+        setTimeout(function() {
+          resolve(50);
+        },170);
+      });
     },
+
     M3 : function() {
-      return Promise
-        .delay(10,10)
-        .catch(Promise.CancellationError,function() {
+      return new Promise(function(resolve,reject,onCancel) {
+        onCancel(function() {
           cancel.M3 = true;
         });
+
+        setTimeout(function() {
+          resolve(10);
+        },10);
+      });
     },
-    M4 : function(M1,M2,M3) { return M1+M2+M3; },
-    MTOP : function(M1,M4) { return M1+M4; }
+
+    M4 : function(M1,M2,M3) {
+      return M1+M2+M3;
+    },
+
+    MTOP : function(M1,M4) {
+      return M1+M4;
+    }
   };
 
-  var facts = Object.create(logic);
+  var facts = Object.create(logic),res;
 
-  var res = clues(facts,'MTOP');
+  it('should not return results',function() {
+    var gotResults;
 
-  it('should result in undefined value where cancelled',function() {
-    return res
-      .then(function(d) {
-        assert.equal(d,undefined);
+    res = clues(facts,'MTOP')
+      .then(function() {
+        gotResults = true;
+      });
+
+    // Cancelling in 100ms  
+    setTimeout(res.cancel.bind(res),100);
+
+    return Promise.delay(150)
+      .then(function() {
+        assert.equal(gotResults,undefined);
       });
   });
 
   it('should trigger the cancel higher up',function() {
-    // Need to to this on a delay to ensure nextTick
-    return res.delay()
-      .then(function() {
-        assert.equal(cancel.M1,true);
-        assert.equal(cancel.M2,true);
-      });
+    assert.equal(cancel.M1,true);
+    assert.equal(cancel.M2,true);
   });
 
   it('should not invalidate results aquired before cancellation',function() {
-    return res.delay()
-      .then(function() {
-        assert.equal(cancel.M3,undefined);
-        assert.equal(facts.M3.value(),10);
-      });
+    assert.equal(cancel.M3,undefined);
+    assert.equal(facts.M3.value(),10);
   });
-    
-  // Cancelling in 100ms  
-  setTimeout(res.cancel.bind(res),100);
-    
-  
 });

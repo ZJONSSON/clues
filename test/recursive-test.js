@@ -9,7 +9,7 @@ describe('In recursive logic',function() {
     },
     medium : Object.create({
       bucket : Object.create({
-        value : Promise.delay(10,100)
+        value : Promise.delay(100,10)
       }),
     }),
     hard : ['simple.value',function(val) {
@@ -58,8 +58,8 @@ describe('In recursive logic',function() {
     return clues(facts,'mediumᐅbucketᐅvalue')
       .then(function(value) {
         assert.equal(value,10);
-      })
-  })
+      });
+  });
 
   describe('complex nesting',function() {
     it('works', function() {
@@ -69,12 +69,11 @@ describe('In recursive logic',function() {
     });
 
     it('ᐅ works as an alias for dot',function() {
-      var facts2 = Object.create(logic);
       return clues(facts,'hardᐅaᐅbᐅcᐅdᐅid')
         .then(function(value) {
           assert.equal(value,102);
         });
-    })
+    });
 
     it('works on returned functions',function() {
       return clues(facts,'hard.a.b.c.d.e.h')

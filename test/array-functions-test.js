@@ -5,8 +5,8 @@ var clues = require('../clues'),
 describe('Array functions',function() {
 
   var logic = {
-    M1 : [function() { return Promise.delay(10,100); }],
-    M2 : function() { return Promise.delay(300,20); },
+    M1 : [function() { return Promise.delay(100,10); }],
+    M2 : function() { return Promise.delay(20,300); },
     M3 : ['M1','M2',function(a,b) { return a+b; }],
     M4 : function(M3) { return M3;},
     recursive : [['M1',Number],[['M2',Number],['M3',Number],Array],Array],

@@ -79,19 +79,35 @@ module.exports = function(api,options) {
         req.body[key] = req.params[key];
       });
 
+    var duration = {};
+
     var $global = Object.create(options.$global || {},{
       res : {value: res},
       req : {value: req},
-      input: {value: req.body}
+      input: {value: req.body},
+      $duration : {value: function(ref,time) {
+        duration[ref] = time;
+      }}
     });
 
     var facts;
     if (typeof(api) === 'object' && !api.length)
       facts = Object.create(api);
     else
-      facts = clues({},api,$global,'reptiles');
+      facts = clues({},api,$global,'__user__');
 
     $global.root = facts;
+
+    function emit_property(ref,d) {
+      var txt = {};
+      txt[ref] = d;
+      txt = first+stringify(txt,pretty,options.debug);
+      first = '';
+      _res.write(txt.slice(1,txt.length-1)+',\t\n');
+      if (typeof(res.flush) == 'function') _res.flush();
+    }
+
+    $global.$emit_property = emit_property;
     
     // The api request is either determined by options.select, req.param.fn or by remaining url
     var data = (options.select || decodeURI((req.params && req.params.fn) || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
@@ -110,12 +126,7 @@ module.exports = function(api,options) {
             if (d === undefined)
               d = null;
 
-            var txt = {};
-            txt[ref] = d;
-            txt = first+stringify(txt,pretty,options.debug);
-            first = '';
-            _res.write(txt.slice(1,txt.length-1)+',\t\n');
-            if (typeof(res.flush) == 'function') _res.flush();
+            emit_property(ref,d);
           });
       });
 
@@ -127,6 +138,8 @@ module.exports = function(api,options) {
 
     return Promise.all(data)
       .then(function() {
+        if (options.debug)
+          emit_property('$debug',duration);
         _res.write('"__end__" : true\t\n}');
         res.end();
       });
