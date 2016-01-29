@@ -67,7 +67,6 @@ module.exports = function(api,options) {
     _res.set('Content-Type', 'application/json; charset=UTF-8');
     _res.set('Cache-Control', 'no-cache, no-store, max-age=0');
     
-    if (typeof(res.flush) == 'function') _res.flush();
 
     Object.keys(req.query || {})
       .forEach(function(key) {
