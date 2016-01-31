@@ -60,6 +60,7 @@ module.exports = function(api,options) {
 
   return function(req,res) {
     var _res = (!options.quiet) ? res : {set: noop, write: noop, flush: noop},
+        _end = _res.end,
         pretty = (options.pretty || req.query.pretty) && 2,
         first = '{                                     \t\n\n';
     req.body = req.body || {};
@@ -67,6 +68,10 @@ module.exports = function(api,options) {
     _res.set('Content-Type', 'application/json; charset=UTF-8');
     _res.set('Cache-Control', 'no-cache, no-store, max-age=0');
     
+    _res.end = function() {
+      _end.apply(_res,arguments);
+      _res.end = _res.write = _res.flush = noop;
+    };
 
     Object.keys(req.query || {})
       .forEach(function(key) {
