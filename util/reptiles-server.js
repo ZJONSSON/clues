@@ -58,6 +58,12 @@ module.exports = function(api,options) {
         };
       }
     }
+    if (options.single)
+      return {
+        error : true,
+        message : err.message,
+        status : err.status
+      };
     return err;
   }
 
