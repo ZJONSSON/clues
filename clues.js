@@ -82,7 +82,7 @@
     }
 
     // If fn name is private or promise private is true, reject when called directly
-    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && fn.name == 'private') || (fn.then && fn.private)))
+    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
      return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
@@ -137,7 +137,7 @@
         throw e;
       });
 
-    if (fn.name == 'private')
+    if (fn.name == 'private' || fn.name == '$private')
       value.private = true;
 
     if (ref)
