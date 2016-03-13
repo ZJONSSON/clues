@@ -9,7 +9,7 @@ function defaultStringify(obj, pretty, debug) {
 
   function jsonReplacer(key, value) {
     if (!value || value instanceof Date) return value;
-    if (typeof value === 'function' && value.name === 'private') return undefined;
+    if (typeof value === 'function' && (value.name === 'private' || value.name === '$private')) return undefined;
     if (typeof value === 'function' || value.length && typeof value[value.length-1] === 'function')
       return debug ? '[Function]' : undefined;
     if (typeof value.then === 'function' || value.isFulfilled !== undefined)
