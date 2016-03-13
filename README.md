@@ -84,7 +84,7 @@ There are only a few restrictions and conventions you must into account when def
 * `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
-* Any function explicitly named [`private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
+* Any function explicitly named [`$private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
 
 That's pretty much it.
 
@@ -502,11 +502,11 @@ Similarly, a private scope can be generated in-line using a function:
 where `answer.a` = 42, but `b` is unreachable
 
 #### making anonymous functions private
-An even easier way to declare functions as private is simply [naming](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name) them `private`.  Any functions named `private` will not be accessible directly, only indirectly through a different function, as an input argument.  Specifically the  `caller` has to be a defined value and not equal to `__user__`).  Here is a quick example:
+An even easier way to declare functions as private is simply [naming](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name) them `$private` (or `private`).  Any functions named `$private` will not be accessible directly, only indirectly through a different function, as an input argument.  Specifically the  `caller` has to be a defined value and not equal to `__user__`).  Here is a quick example:
 
 ```js
 var facts = {
-  a : function private() { return 2; },
+  a : function $private() { return 2; },
   b : function(a) { return a+2; }
 };
 
