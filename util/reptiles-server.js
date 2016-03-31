@@ -134,7 +134,8 @@ module.exports = function(api,options) {
           .catch(stringifyError)
           .then(function(d) {
             if (options.single) {
-              _res.send(d.error ? (d.status||400) : 200, stringify(d,pretty,options.debug)+'\n');
+              _res.status(d.error ? (d.status||400) : 200)
+                .end(stringify(d,pretty,options.debug));
               _res.write = noop;
               _res.end = noop;
               return;
