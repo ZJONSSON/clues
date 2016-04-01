@@ -62,7 +62,8 @@ module.exports = function(api,options) {
       return {
         error : true,
         message : err.message,
-        status : err.status
+        status : err.status,
+        xflash : err.xflash
       };
     return err;
   }
