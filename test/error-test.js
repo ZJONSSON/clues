@@ -70,6 +70,31 @@ describe('error',function() {
           });
       });
     });
+
+    describe('function named $noThrow',function() {
+      it('should return the error obj',function() {
+        return clues(facts,function $noThrow(DEP) {
+          return DEP;
+        })
+        .then(function(e) {
+          assert.equal(e.ref,'ERR');
+          assert.equal(e.message,'Could not process');
+        },function() {
+          throw 'Should return the error object';
+        });
+      });
+      it('should return the error obj for subsequent fn',function() {
+        return clues(facts,function $noThrow() {
+          return ['DEP',Object];
+        })
+        .then(function(e) {
+          assert.equal(e.ref,'ERR');
+          assert.equal(e.message,'Could not process');
+        },function() {
+          throw 'Should return the error object';
+        });
+      });
+    });
   });
 });
 
