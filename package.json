@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "3.4.8",
+  "version": "3.5.0",
   "description": "Lightweight logic tree solver using promises.",
   "keywords": [
     "asynchronous",
@@ -14,10 +14,10 @@
   },
   "main": "clues.js",
   "dependencies": {
-    "bluebird": "~3.1.1"
+    "bluebird": "~3.4.0"
   },
   "devDependencies": {
-    "mocha": "~2.3.4"
+    "mocha": "~2.5.3"
   },
   "license": "MIT",
   "scripts": {

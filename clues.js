@@ -127,13 +127,16 @@
         if (typeof $global.$duration === 'function')
           $global.$duration(fullref,[(new Date()-duration),(new Date())-wait]);
         return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
-      },function(e) {
+      })
+      .catch(function(e) {
         if (typeof e !== 'object')
           e = { message : e};
         e.error = true;
         e.ref = e.ref || ref;
         e.fullref = e.fullref || fullref;
         e.caller = e.caller || caller || '';
+        if (fn && fn.name == '$noThrow')
+          return e;
         throw e;
       });
 
