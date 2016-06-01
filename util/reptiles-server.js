@@ -118,7 +118,7 @@ module.exports = function(api,options) {
     function emit_property(ref,d) {
       var txt = {};
       txt[ref] = d;
-      txt = first+stringify(txt,pretty,options.debug);
+      txt = first+stringify(txt,pretty,options.debug,req);
       first = '';
       _res.write(txt.slice(1,txt.length-1)+',\t\n');
       if (typeof(res.flush) == 'function') _res.flush();
@@ -136,7 +136,7 @@ module.exports = function(api,options) {
           .then(function(d) {
             if (options.single) {
               _res.status(d.error ? (d.status||400) : 200)
-                .end(stringify(d,pretty,options.debug));
+                .end(stringify(d,pretty,options.debug,req));
               _res.write = noop;
               _res.end = noop;
               return;
