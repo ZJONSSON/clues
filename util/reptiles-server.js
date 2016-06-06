@@ -127,7 +127,7 @@ module.exports = function(api,options) {
     $global.$emit_property = emit_property;
     
     // The api request is either determined by options.select, req.param.fn or by remaining url
-    var data = (options.select || decodeURI((req.params && req.params.fn) || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
+    var data = (options.select || decodeURIComponent((req.params && req.params.fn) || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
         ref = ref.replace(/\//g,'.');
         if (ref === '' && options.debug) ref = facts;
