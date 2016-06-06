@@ -121,7 +121,13 @@
     var value = inputs
       .then(function(args) {
         duration = new Date();
-        return fn.apply(logic || {}, args);
+        try {
+          return fn.apply(logic || {}, args);
+        } catch(e) {
+          if (e && e.stack && typeof $global.$logError === 'function')
+            $global.$logError(e);
+          throw e;
+        }
       })
       .then(function(d) {
         if (typeof $global.$duration === 'function')

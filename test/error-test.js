@@ -95,6 +95,43 @@ describe('error',function() {
         });
       });
     });
+
+    describe('$logError',function() {
+      var logic = {
+          stack_error: function() { throw new Error('error');},
+          rejection: function() { throw 'error';},
+          optional: function(_stack_error,_rejection) {
+            return 'OK';
+          }
+        };
+
+      it('should log an error with stack',function() {
+        var facts = Object.create(logic),error;          
+        return clues(facts,'stack_error',{$logError:function(e) {error = e;}})
+          .catch(Object)
+          .then(function() {
+            assert.equal(error.message,'error');
+          });
+      });
+
+      it('should not log an error with no stack',function() {
+        var facts = Object.create(logic),error;          
+        return clues(facts,'rejection',{$logError:function(e) {error = e;}})
+          .catch(Object)
+          .then(function() {
+            assert.equal(error,undefined);
+          });
+      });
+      
+      it('should log an error even if only used optionally',function() {
+        var facts = Object.create(logic),error;          
+        return clues(facts,'optional',{$logError:function(e) {error = e;}})
+          .catch(Object)
+          .then(function() {
+            assert.equal(error.message,'error');
+          });
+      });
+    });
   });
 });
 
