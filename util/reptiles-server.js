@@ -129,7 +129,6 @@ module.exports = function(api,options) {
     // The api request is either determined by options.select, req.param.fn or by remaining url
     var data = (options.select || decodeURIComponent((req.params && req.params.fn) || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
-        ref = ref.replace(/\//g,'.');
         if (ref === '' && options.debug) ref = facts;
         return clues(facts,ref,$global,'__user__')
           .catch(stringifyError)
