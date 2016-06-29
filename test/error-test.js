@@ -99,7 +99,9 @@ describe('error',function() {
     describe('$logError',function() {
       var logic = {
           stack_error: function() { throw new Error('error');},
+          stack_error_promise: function() { return clues.Promise.reject(new Error('error'));},
           rejection: function() { throw 'error';},
+          rejection_promise: function() { return Promise.reject('error');},
           optional: function(_stack_error,_rejection) {
             return 'OK';
           }
@@ -110,11 +112,30 @@ describe('error',function() {
         return clues(facts,'stack_error',{$logError:function(e) {error = e;}})
           .catch(Object)
           .then(function() {
-            assert.equal(error.message,'error');
+            assert.equal(error && error.message,'error');
           });
       });
 
+      it('should log a rejected promise with stack',function() {
+        var facts = Object.create(logic),error;          
+        return clues(facts,'stack_error_promise',{$logError:function(e) {error = e;}})
+          .catch(Object)
+          .then(function() {
+            assert.equal(error && error.message,'error');
+          });
+      });
+
+
       it('should not log an error with no stack',function() {
+        var facts = Object.create(logic),error;          
+        return clues(facts,'rejection',{$logError:function(e) {error = e;}})
+          .catch(Object)
+          .then(function() {
+            assert.equal(error,undefined);
+          });
+      });
+
+      it('should not log a rejection with no stack',function() {
         var facts = Object.create(logic),error;          
         return clues(facts,'rejection',{$logError:function(e) {error = e;}})
           .catch(Object)
