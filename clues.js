@@ -126,7 +126,7 @@
         })
         .catch(function(e) {
           if (e && e.stack && typeof $global.$logError === 'function')
-            $global.$logError(e);
+            $global.$logError(e, fullref);
           throw e;
         });
       })
