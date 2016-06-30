@@ -108,20 +108,22 @@ describe('error',function() {
         };
 
       it('should log an error with stack',function() {
-        var facts = Object.create(logic),error;          
-        return clues(facts,'stack_error',{$logError:function(e) {error = e;}})
+        var facts = Object.create(logic),error,fullref;          
+        return clues(facts,'stack_error',{$logError:function(e,f) {error = e;fullref = f;}})
           .catch(Object)
           .then(function() {
             assert.equal(error && error.message,'error');
+            assert.equal(fullref,'stack_error');
           });
       });
 
       it('should log a rejected promise with stack',function() {
-        var facts = Object.create(logic),error;          
-        return clues(facts,'stack_error_promise',{$logError:function(e) {error = e;}})
+        var facts = Object.create(logic),error,fullref;          
+        return clues(facts,'stack_error_promise',{$logError:function(e,f) {error = e; fullref = f;}})
           .catch(Object)
           .then(function() {
             assert.equal(error && error.message,'error');
+            assert.equal(fullref,'stack_error_promise');
           });
       });
 
