@@ -28,4 +28,38 @@ In addition to providing all standard `clues.js` functions, the client also prov
 * `render(element)`  This function looks at the `data-reptile` attribute and solves for the logic function with the same name.   The logic function can use the argument `element` to gain access to the dom element itself.  If `data-reptile` is comma delimited the client will try to resolve the first value and then moving on to the next if the first resulted in an error, etc.
 * `renderAll(element)` This function will call `render(element)` on all subnodes that have `data-reptile` defined.
 
+### 'inject(obj, prop, $global)'
+This function takes the fact object as first argument and an object with properties that should be injected as the second argument.  This function makes it easy to mock any endpoints in a logic tree by simply injecting the intended values in the right places.  The key for each injected property should be the full path (dot notation) and the value can be a function or an absolute value.   If the injection already overrides a pre-existing value/function the original will be available under `original_'+propertyname.
 
+Example:
+
+```js
+const Db = {
+  user : function(userid) {
+    return database.query('users where usedid = ?',[userid])
+  }
+};
+
+const Logic = {
+  db : function(userid) {
+    return Object.create(Db,{
+      userid: {value: userid}
+    });
+  },
+  userid : ['input.userid',String]
+};
+
+let injected = function($global) {
+  return inject(Object.create(Logic), {
+    'userid': function(original_userid) {
+      return 'test_'+original_userid;
+    },
+    'db.user' : function(userid) {
+      return { desc: 'this is an injected response', userid: userid}
+    }
+  },$global);
+};
+
+clues(injected,'db.user',{input:{userid:'johndoe'}})
+  .then(console.log,console.log);
+```
