@@ -130,9 +130,11 @@
           throw e;
         });
       })
-      .then(function(d) {
+      .finally(function() {
         if (typeof $global.$duration === 'function')
           $global.$duration(fullref,[(new Date()-duration),(new Date())-wait]);
+      })
+      .then(function(d) {
         return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
       })
       .catch(function(e) {
