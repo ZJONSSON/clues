@@ -116,9 +116,10 @@ module.exports = function(api,options) {
     $global.root = facts;
 
     function emit_property(ref,d) {
+      var debug = options.debug !== undefined ? options.debug : $global.reptileDebug;
       var txt = {};
       txt[ref] = d;
-      txt = first+stringify(txt,pretty,options.debug,req);
+      txt = first+stringify(txt,pretty,debug,req);
       first = '';
       _res.write(txt.slice(1,txt.length-1)+',\t\n');
       if (typeof(res.flush) == 'function') _res.flush();
@@ -133,9 +134,10 @@ module.exports = function(api,options) {
         return clues(facts,ref,$global,'__user__')
           .catch(stringifyError)
           .then(function(d) {
+            var debug = options.debug !== undefined ? options.debug : $global.reptileDebug;
             if (options.single) {
               _res.status(d.error ? (d.status||400) : 200)
-                .end(stringify(d,pretty,options.debug,req));
+                .end(stringify(d,pretty,debug,req));
               _res.write = noop;
               _res.end = noop;
               return;
