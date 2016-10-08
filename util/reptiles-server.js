@@ -157,7 +157,7 @@ module.exports = function(api,options) {
 
     return Promise.all(data)
       .then(function() {
-        if (options.debug)
+        if (options.debug !== undefined ? options.debug : $global.reptileDebug)
           emit_property('$debug',duration);
         _res.write('"__end__" : true\t\n}');
         res.end();
