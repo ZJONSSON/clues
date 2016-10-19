@@ -39,7 +39,7 @@ module.exports = function(api,options) {
   options = options || {};
   var stringify = typeof options.stringify === 'function' ? options.stringify : defaultStringify;
 
-  function stringifyError(e) {
+  function stringifyError(e,debug) {
     var err = {error: true};
     Object.getOwnPropertyNames(e)
       .forEach(function(key) {
@@ -50,7 +50,7 @@ module.exports = function(api,options) {
       if (typeof options.logger === 'function')
         options.logger(err);
       
-      if (!options.debug) {
+      if (!debug) {
         err = {
           error : true,
           message : 'Internal Error',
@@ -115,8 +115,7 @@ module.exports = function(api,options) {
 
     $global.root = facts;
 
-    function emit_property(ref,d) {
-      var debug = options.debug !== undefined ? options.debug : $global.reptileDebug;
+    function emit_property(ref,d,debug) {
       var txt = {};
       txt[ref] = d;
       txt = first+stringify(txt,pretty,debug,req);
@@ -130,11 +129,16 @@ module.exports = function(api,options) {
     // The api request is either determined by options.select, req.param.fn or by remaining url
     var data = (options.select || decodeURIComponent((req.params && req.params.fn) || req.url.slice(1).replace(/\//g,'.').replace(/\?.*/,'')).split(','))
       .map(function(ref) {
+        var debug;
         if (ref === '' && options.debug) ref = facts;
         return clues(facts,ref,$global,'__user__')
-          .catch(stringifyError)
+          .finally(function() {
+            debug = options.debug !== undefined ? options.debug : $global.reptileDebug;
+          })
+          .catch(function(e) {
+            return stringifyError(e,debug);
+          })
           .then(function(d) {
-            var debug = options.debug !== undefined ? options.debug : $global.reptileDebug;
             if (options.single) {
               _res.status(d.error ? (d.status||400) : 200)
                 .end(stringify(d,pretty,debug,req));
@@ -145,7 +149,7 @@ module.exports = function(api,options) {
             if (d === undefined)
               d = null;
 
-            emit_property(ref,d);
+            emit_property(ref,d,debug);
           });
       });
 
