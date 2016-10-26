@@ -8,9 +8,11 @@
   }
 
   var reArgs = /function.*?\(([^)]*?)\).*/;
+  var reEs6 =  /\({0,1}(.*?)\){0,1}\s*=>/;
+
   function matchArgs(fn) {
     if (!fn.__args__) {
-      var match = reArgs.exec(fn.prototype.constructor.toString());
+      var match = fn.prototype && reArgs.exec(fn.prototype.constructor.toString()) || reEs6.exec(fn.toString());
       fn.__args__ = match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {

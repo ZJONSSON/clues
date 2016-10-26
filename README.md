@@ -3,7 +3,7 @@
 [![Test Coverage][circle-image]][circle-url]
 
 
-**clues.js** is a lean-mean-promisified-getter-machine that crunches through any javascript objects, including complex trees,  functions, values and promises.  Clues consists of a single getter function (just over 100 loc) that dynamically resolves dependency trees and memoizes resolutions (lets call them derived facts) along the way.   
+**clues.js** is a lean-mean-promisified-getter-machine that crunches through any javascript objects, including complex trees,  functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just over 100 loc) that dynamically resolves dependency trees and memoizes resolutions (lets call them derived facts) along the way.   
 
 *[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions.  Other libraries exploring similar concepts include  [curran/reactive-model](https://github.com/curran/reactive-model) and [ZJONSSON/instinct](https://github.com/ZJONSSON/instinct.js)*
 
@@ -37,7 +37,7 @@ Here are a few examples:
 ```js
 clues(obj,'person').then(console.log);              // by name
 clues(obj,function(person) { console.log(person); }) // by function
-clues(obj,['person',console.log]);                  // by array defined function
+clues(obj,['person',console.},log]);                  // by array defined function
 ```
 ##### global (optional third argument)
 The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
@@ -59,12 +59,8 @@ Whenever `clues` hits a property that is an unresolved function it will parse th
 var obj = {
   miles : 220,
   hours : Promise.fulfilled(2.3),  // we can also define as promise
-  minutes : function(hours) {
-    return hours * 60;
-  },
-  mph : function(miles,hours) {
-    return miles / hours;
-  }
+  minutes : hours => hours * 60,
+  mph : (miles,hours) => miles / hours
 };
 
 // get mph directly
@@ -86,6 +82,7 @@ There are only a few restrictions and conventions you must into account when def
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
 * Any function explicitly named [`$private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
 * Any function explicitly named `$noThrow` will return any error as an object not as a rejection (similar to `__` prefix in argument names)
+* ES6 arrow functions will be resoleved as regular functions with same `this` context
 
 That's pretty much it.
 
@@ -108,9 +105,7 @@ var Logic = {
       return 2.3;
     });
   },
-  mph : function(miles,hours) {
-    return miles / hours;
-  }
+  mph : (miles,hours) => miles / hours
 };
 
 // Create a facts/logic object from the prototype
