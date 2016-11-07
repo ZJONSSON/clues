@@ -96,14 +96,13 @@ module.exports = function(api,options) {
         req.body[key] = req.params[key];
       });
 
-    var duration = {};
-
     var $global = Object.create(options.$global || {},{
       res : {value: res},
       req : {value: req},
       input: {value: req.body},
-      $duration : {value: function(ref,time) {
-        duration[ref] = time;
+      $duration_stats: {value: {}},
+      $duration : {value: options.$global.$duration || function(ref,time) {
+        $global.$duration_stats[ref] = time;
       }}
     });
 
@@ -162,7 +161,7 @@ module.exports = function(api,options) {
     return Promise.all(data)
       .then(function() {
         if (options.debug !== undefined ? options.debug : $global.reptileDebug)
-          emit_property('$debug',duration);
+          emit_property('$debug',$global.$duration_stats);
         _res.write('"__end__" : true\t\n}');
         res.end();
       });
