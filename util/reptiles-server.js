@@ -37,6 +37,7 @@ function noop() {}
 module.exports = function(api,options) {
   api = api || {};
   options = options || {};
+  options.$global = options.$global || {};
   var stringify = typeof options.stringify === 'function' ? options.stringify : defaultStringify;
 
   function stringifyError(e,debug) {
@@ -96,7 +97,7 @@ module.exports = function(api,options) {
         req.body[key] = req.params[key];
       });
 
-    var $global = Object.create(options.$global || {},{
+    var $global = Object.create(options.$global,{
       res : {value: res},
       req : {value: req},
       input: {value: req.body},
