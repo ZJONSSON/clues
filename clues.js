@@ -10,6 +10,26 @@
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
 
+  function checkCircular(d,value) {
+    var checked = [],circular;
+    return (function check(c) {
+      if (circular || !c || checked.indexOf(c) !== -1) return;
+      checked.push(c);
+      if (c == value)
+        return (circular = true);
+
+      if (c._cancellationParent)
+        check(c._cancellationParent);
+
+      if (c._onCancelField && c._onCancelField._values)
+        [].concat(c._onCancelField._values || []).forEach(check);
+
+      if (c._followee && c._followee())
+        check(c._followee());
+
+    })(d) || circular;
+  }
+
   function matchArgs(fn) {
     if (!fn.__args__) {
       var match = fn.prototype && fn.prototype.constructor.toString() || fn.toString();
@@ -24,15 +44,15 @@
     return fn.__args__;
   }
 
-  function clues(logic,fn,$global,caller,fullref) {
+  function clues(logic,fn,$global,caller,fullref,last) {
     var args,ref;
 
     if (!$global) $global = {};
 
     if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
-      return clues({},logic,$global,caller,fullref)
+      return clues({},logic,$global,caller,fullref,last)
         .then(function(logic) {
-          return clues(logic,fn,$global,caller,fullref);
+          return clues(logic,fn,$global,caller,fullref,last);
         });
       
     if (typeof fn === 'string') {
@@ -41,12 +61,12 @@
       var dot = ref.search(/ᐅ|\./);
       if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
-        return clues(logic,next,$global,caller,fullref)
+        return clues(logic,next,$global,caller,fullref,last)
           .then(function(d) {
             logic = d;
             ref = ref.slice(dot+1);
             fullref = (fullref ? fullref+'.' : '')+next;
-            return clues(logic,ref,$global,caller,fullref);
+            return clues(logic,ref,$global,caller,fullref,last);
           })
           .catch(function(e) {
             if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
@@ -61,7 +81,7 @@
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref] && caller && caller !== '__user__')
-          return clues($global,ref,$global,caller,fullref);
+          return clues($global,ref,$global,caller,fullref,last);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
         else return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
@@ -74,7 +94,7 @@
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
-        return clues(obj,fn,$global,caller,fullref);
+        return clues(obj,fn,$global,caller,fullref,last);
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];
@@ -91,6 +111,9 @@
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
+      if (fn && fn._cancellationParent && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
+        return clues.Promise.rejected({ref: ref, message: 'circular', fullref:fullref, caller: caller});
+
       // If the value is a promise we wait for it to resolve to inspect the result
       if (fn && typeof fn.then === 'function')
         return fn.then(function(d) {
@@ -121,7 +144,7 @@
 
         return res || clues.Promise.resolve()
           .then(function() {
-            return clues(logic,arg,$global,ref || 'fn',fullref);
+            return clues(logic,arg,$global,ref || 'fn',fullref,value);
           })
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
