@@ -109,7 +109,7 @@
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
-      if (fn && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
+      if (fn && fn._cancellationParent && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
         return clues.Promise.rejected({ref: ref, message: 'circular', fullref:fullref, caller: caller});
 
       // If the value is a promise we wait for it to resolve to inspect the result
