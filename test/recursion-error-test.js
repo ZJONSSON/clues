@@ -1,7 +1,7 @@
 var clues = require('../clues'),
     assert = require('assert');
 
-clues.Promise.config({cancellation:true});
+
 
  var logic = {
     mph : function(_mpm) { 
