@@ -11,9 +11,8 @@
     var checked = [],circular;
     function check(c) {
       if (!c || circular || checked.indexOf(c) !== -1) return;
+      if (c === d) return circular = true;
       checked.push(c);
-      if (c === d) 
-        return circular = true;
       check(c._promise0);
       check(c._receiver0);
       check(c._promise);
@@ -108,7 +107,7 @@
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
-      if (fn && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
+      if (fn && clues.checkCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
         return clues.Promise.rejected({ref: ref, message: 'circular', fullref:fullref, caller: caller});
 
       // If the value is a promise we wait for it to resolve to inspect the result

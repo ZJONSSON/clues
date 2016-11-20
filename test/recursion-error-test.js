@@ -1,7 +1,7 @@
 var clues = require('../clues'),
     assert = require('assert');
 
-
+clues.checkCircular = true;
 
  var logic = {
     mph : function(_mpm) { 
