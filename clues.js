@@ -7,24 +7,22 @@
     self.clues = clues;
   }
 
-  function checkCircular(d,value) {
-    var checked = [],circular;
-    return (function check(c) {
-      if (circular || !c || checked.indexOf(c) !== -1) return;
+  function checkDependency(a,b) {
+    var checked = [];
+    function check(c) {
+      if (!c || checked.indexOf(c) !== -1)
+        return;
       checked.push(c);
-      if (c == value)
-        return (circular = true);
-
-      if (c._cancellationParent)
-        check(c._cancellationParent);
-
-      if (c._onCancelField && c._onCancelField._values)
-        c._onCancelField._values.forEach(check);
-
-      if (c._followee && c._followee())
-        check(c._followee());
-
-    })(d) || circular;
+      if (c === b)
+        return true;
+      return check(c._cancellationParent) ||
+            (  c._onCancelField && 
+               c._onCancelField._values &&
+               c._onCancelField._values.some(check)
+            ) ||
+            (c._followee && check(c._followee()));
+    }
+    return check(a);
   }
 
   var reArgs = /function.*?\(([^)]*?)\).*/;
@@ -109,7 +107,7 @@
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
-      if (fn && fn._cancellationParent && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkCircular(fn,last))
+      if (fn && fn._cancellationParent && !clues.ignoreCircular && fn.isPending && fn.isPending() && checkDependency(fn,last))
         return clues.Promise.rejected({ref: ref, message: 'circular', fullref:fullref, caller: caller});
 
       // If the value is a promise we wait for it to resolve to inspect the result

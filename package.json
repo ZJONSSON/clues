@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "3.6.0-rc2",
+  "version": "3.6.0-rc4",
   "description": "Lightweight logic tree solver using promises.",
   "keywords": [
     "asynchronous",
