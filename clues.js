@@ -163,8 +163,13 @@
     if (fn.name == 'private' || fn.name == '$private')
       value.private = true;
 
-    if (ref)
-      logic[ref] = value;
+    if (ref) try {
+      Object.defineProperty(logic,ref,{value: value, enumerable: true});
+    } catch(e) {
+      return value.then(function(value) {
+        return clues.Promise.rejected({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value});
+      });
+    }
 
     return value;
     
