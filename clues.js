@@ -164,7 +164,7 @@
       value.private = true;
 
     if (ref) try {
-      Object.defineProperty(logic,ref,{value: value, enumerable: true});
+      Object.defineProperty(logic,ref,{value: value, enumerable: true, configurable: true});
     } catch(e) {
       return value.then(function(value) {
         return clues.Promise.rejected({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value});
