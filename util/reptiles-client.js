@@ -10,6 +10,8 @@
     self.reptile = reptile;
     clues = self.clues;
   }
+  // expose requests for external cancellation
+  var requests = self.reptileRequests = self.reptileRequests || {};
 
   var Promise = clues.Promise;
 
@@ -38,6 +40,9 @@
     r.onload =  function() {
       processBuffer(r.responseText.slice(last));
     };
+    var uuid = Object.keys(queue).join(',')+String(Number(new Date()));
+    requests[uuid] = r;
+    r.addEventListener('loadend', function() { delete requests[uuid]; });
 
     function processBuffer(d) {
       if (d) buffer += d;
