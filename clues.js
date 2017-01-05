@@ -166,13 +166,15 @@
     if (ref) {
       logic[ref] = value;
       if (logic[ref] !== value)
-        try {
+        return clues.Promise.try(function() {
           Object.defineProperty(logic,ref,{value: value, enumerable: true, configurable: true});
-        } catch(e) {
+          return value;
+        })
+        .catch(function(e) {
           return value.then(function(value) {
             return clues.Promise.rejected({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value});
           });
-        }
+        });
     }
 
     return value;
