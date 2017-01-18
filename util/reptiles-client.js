@@ -13,6 +13,19 @@
 
   var Promise = clues.Promise;
 
+  function defer() {
+    var resolve, reject;
+    var promise = new Promise(function() {
+        resolve = arguments[0];
+        reject = arguments[1];
+    });
+    return {
+        resolve: resolve,
+        reject: reject,
+        promise: promise
+    };
+  }
+
   function fetch() {
     var self = this,
         buffer = '',
@@ -74,7 +87,7 @@
   reptile.external = function(options) {
     options = options || {};
     return function (ref) {
-      var defer = Promise.defer(),
+      var defer = defer(),
           self = this;
 
       if (!self.$queue) {
