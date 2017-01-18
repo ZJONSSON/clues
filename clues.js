@@ -62,7 +62,7 @@
           return clues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
-        else return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
+        else return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
       }
     }
 
@@ -85,7 +85,7 @@
 
     // If fn name is private or promise private is true, reject when called directly
     if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
-     return clues.Promise.rejected({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
+     return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
@@ -170,7 +170,7 @@
           Object.defineProperty(logic,ref,{value: value, enumerable: true, configurable: true});
         } catch(e) {
           return value.then(function(value) {
-            return clues.Promise.rejected({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value});
+            return clues.Promise.reject({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value});
           });
         }
     }
