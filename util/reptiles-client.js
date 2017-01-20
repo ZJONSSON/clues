@@ -92,7 +92,7 @@
   reptile.external = function(options) {
     options = options || {};
     return function (ref) {
-      var defer = defer(),
+      var deferred = defer(),
           self = this;
 
       if (!self.$queue) {
@@ -101,8 +101,8 @@
         self.$queue = {};    
       }
 
-      self.$queue[ref] = defer;
-      return defer.promise;
+      self.$queue[ref] = deferred;
+      return deferred.promise;
     };
   };
  
