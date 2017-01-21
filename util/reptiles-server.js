@@ -161,8 +161,18 @@ module.exports = function(api,options) {
 
     return Promise.all(data)
       .then(function() {
-        if (options.debug !== undefined ? options.debug : $global.reptileDebug)
-          emit_property('$debug',$global.$duration_stats);
+        if (options.debug !== undefined ? options.debug : $global.reptileDebug) {
+        var stats = $global.$duration_stats;
+        stats = Object.keys(stats)
+          .map(function(key) {
+            var val = stats[key];
+            return {key: key, count:val.count, time: val.time, wait: val.wait};
+          })
+          .sort(function(a,b) {
+            return b.time - a.time;
+          });
+          emit_property('$debug',stats);
+        }
         _res.write('"__end__" : true\t\n}');
         res.end();
       });
