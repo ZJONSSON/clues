@@ -212,7 +212,7 @@ clues(obj,function(fourthItem) {
 It is worth noting that children do not inherit anything from parents.   If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see [appendix](#moar-stuff-a-listening-to-your-parents))
 
 ##### ᐅ as an alias for a dot
-Clues provides an alias for dots (ᐅ - unicode U+07CD) in nested paths.  Using this alias, nested arguments can be defined directly in the function signature.  The downside to this approach is that argument names can become more cumbersome.
+Clues provides an alias for dots (ᐅ - unicode U+1405) in nested paths.  Using this alias, nested arguments can be defined directly in the function signature.  The downside to this approach is that argument names can become more cumbersome.
 
 Here is the second example using the alias
 
