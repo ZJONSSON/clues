@@ -126,12 +126,12 @@
       });
 
     var inputs =  clues.Promise.all(args),
-        wait = new Date(),
+        wait = Date.now(),
         duration;
 
     var value = inputs
       .then(function(args) {
-        duration = new Date();
+        duration = Date.now();
         return clues.Promise.try(function() {
           return fn.apply(logic || {}, args);
         })
@@ -143,7 +143,7 @@
       })
       .finally(function() {
         if (typeof $global.$duration === 'function')
-          $global.$duration(fullref || ref || (fn && fn.name),[(new Date()-duration),(new Date())-wait]);
+          $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait]);
       })
       .then(function(d) {
         return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
