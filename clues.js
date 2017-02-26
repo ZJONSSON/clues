@@ -163,6 +163,8 @@
     if (fn.name == 'private' || fn.name == '$private')
       value.private = true;
 
+    value.name = fn.name;
+
     if (ref) {
       logic[ref] = value;
       if (logic[ref] !== value)
