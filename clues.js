@@ -164,6 +164,7 @@
       value.private = true;
 
     value.name = fn.name;
+    value.fn = fn;
 
     if (ref) {
       logic[ref] = value;
