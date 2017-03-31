@@ -19,7 +19,7 @@ The basic function signature is simple and **always** returns a promise:
 The first argument of the clues function should be the object containing the logic/facts requested (or a function that delivers this object).    The logic/facts object is any Javascript object, containing any mix of the following properties (directly and/or through prototype chains):
 
 * Static values (strings, numbers, booleans, etc)
-* Functions (i.e. logic) returning anything else in this list 
+* Functions (i.e. logic) returning anything else in this list (supports async/await)
 * Promises returning anything else in this list
 * Other javascript objects (child scopes)
 * Functions returning a function that returns anything in this list....
@@ -38,6 +38,7 @@ Here are a few examples:
 clues(obj,'person').then(console.log);              // by name
 clues(obj,function(person) { console.log(person); }) // by function
 clues(obj,['person',console.},log]);                  // by array defined function
+var person = await clues(obj,'person')               // Using await inside async function
 ```
 ##### global (optional third argument)
 The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
