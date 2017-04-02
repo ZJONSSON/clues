@@ -12,7 +12,9 @@
 
   function matchArgs(fn) {
     if (!fn.__args__) {
-      var match = fn.prototype && reArgs.exec(fn.prototype.constructor.toString()) || reEs6.exec(fn.toString());
+      var match = fn.prototype && fn.prototype.constructor.toString() || fn.toString();
+      match = match.replace(/^\s*async/,'');
+      match = reArgs.exec(match) || reEs6.exec(match);
       fn.__args__ = match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {
