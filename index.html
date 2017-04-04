@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif);
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+     body {
+        font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .large { font-size: 2em; }
+      a, a > code {
+        color: rgb(249, 38, 114);
+        text-decoration: none;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #272822;
+        color: #777872;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+name: inverse
+layout: true
+
+---
+class: center, middle, inverse
+
+# clues intro
+
+
+---
+# simple example
+
+Lets define an object that is a mix of
+* facts (either outright variables or promises) 
+* functions that depend on other facts (or derived facts from logic):
+
+```js
+// Define facts and logic
+var obj = {
+  miles : 220,
+  hours : Promise.fulfilled(2.3),  // we can also define as promise
+  minutes : function(hours) {
+    return hours * 60;
+  },
+  mph : function(miles,hours) {
+    return miles / hours;
+  },
+  mpm : function(miles,minutes) {
+    return miles / minutes;
+  }
+};
+```
+
+---
+# simple example
+
+We can then apply `clues` as a powerful `getter` function on this object.
+
+The first argument to `clues` is the object we want to look at and the second argument is the property (or function or properties) we want to figure out:
+
+
+```js
+// Then ask questions:
+
+// get mph directly
+clues(obj,'mph').then(console.log);
+
+// get multiple properties through a function call
+clues(obj,function(minutes, mph, mpm) {
+  console.log('Drove for '+minutes+' min at '+mph+' mph');
+  console.log('equals '+mpm+' miles/minute');
+});
+```
+
+
+
+---
+class: center, middle, inverse
+
+###clues.js is a lean-mean-promisified-getter-machine that resolves dependency trees and memoizes resolutions (derived facts) along the way.
+
+### It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls.
+
+---
+
+# the basics
+
+* When `clues` hits an unresolved function, it will:
+  * parse the argument names (if any)
+  * attempt to resolve the argument values (from properties within same scope that have the same name as each argument)
+  * and finally (iii) run the function
+
+* Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution. 
+
+* If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..
+
+* Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.
+
+---
+class: center, middle, inverse
+
+# clues(**obj**,fn [,$global])
+simple getter, **always** returns a promise:
+
+
+---
+
+# 1st argument: which context?
+
+The first argument of the clues function should be the object containing the logic/facts requested (or a function that delivers this object). 
+
+ The logic/facts object is any Javascript object, containing any mix of the following properties (directly and/or through prototype chains):
+
+* Static values (strings, numbers, booleans, etc)
+* Functions (i.e. logic) returning anything else in this list 
+* Promises returning anything else in this list
+* Other javascript objects (child scopes)
+* Functions returning a function that returns anything in this list....
+* ....etc
+
+...so objects don't have to be *clues* objects to be traversed.  In fact there is no such thing as a *clues* object.  However there are a few standardized ways to enforce clues to perform specific actions on objects,  but those actions can also be performed manually.
+
+---
+
+# 2nd argument: what do you seek?
+
+The second argument is a reference to the property/function requested: 
+
+* Name of the property to be resolved
+
+```
+        clues(obj,'borrowerName').then(...)
+```
+
+* ...or a path to the property, using dot notation
+
+```
+        clues(obj,'borrower.name').then(...)
+```
+
+* A custom fn whose argument names will be resolved prior to execution
+
+```
+        clues(obj,function(borrowerName,coborrowerName) {...})
+```
+
+* Array defined function (see [below](#using-special-arrays-to-define-functions)) or dot notation
+
+```
+        clues(obj,['borrower.Name','coborrower.Name',function(d) {...}])
+        // or
+        clues(obj,function(borrowerᐅName, coborrowerᐅName {...}])
+```
+
+* Private scope in an Array defined function
+
+```
+        clues(obj,[otherObj,'borrower.Name','coborrower.Name',function(d) {...}])
+```
+
+---
+
+# 3rd argument: what is globally known?
+
+The third argument is an optional [global object](#global-variables), whose properties are available from any scope. 
+
+Some practical examples of global properties: 
+* `input` - a generic user input object (i.e. req.body req.params etc)
+* `req` (in an express based application)
+* `session` or `user` for access control etc
+
+`clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
+
+PS: The global object itself is handled as a logic/facts object and will be traversed as required.
+
+---
+
+# fallbacks
+
+There are only a few conventions you must into account when defining property names.
+
+* Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (which doesn't affect pure variables that start with `$`)
+
+* [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (only if they are functions)
+
+* `$global` will always return the full global object provided, in any context.
+
+* `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
+
+* Property names really should never start with an underscore 
+
+* Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
+
+That's pretty much it.
+
+---
+# back to the example
+
+Lets define an object that is a mix of
+* facts (either outright variables or promises) 
+* functions that depend on other facts (or derived facts from logic):
+
+```js
+// Define facts and logic
+var obj = {
+  miles : 220,
+  hours : Promise.fulfilled(2.3),  // we can also define as promise
+  minutes : function(hours) {
+    return hours * 60;
+  },
+  mph : function(miles,hours) {
+    return miles / hours;
+  },
+  mpm : function(miles,minutes) {
+    return miles / minutes;
+  }
+};
+```
+
+---
+
+# back to the example
+
+### step 1
+
+After asking for `mph`:
+```js
+// get mph directly
+clues(obj,'mph').then(console.log);
+```
+
+The underlying object has changed to:
+```js
+{
+  miles : 220,
+  hours : [Promise],
+  minutes : function() {...},
+  mph : [Promise],
+  mpm : function() {...},
+}
+```
+---
+
+# back to the example
+
+### step 2
+
+Subsequently asking for `mpm`:
+```js
+// get mph directly
+clues(obj,'mph').then(console.log);
+```
+
+Further transforms the object to:
+```js
+{
+  miles : 220,
+  hours : [Promise],
+  minutes : [Promise],
+  mph : [Promise],
+  mpm : [Promise],
+}
+```
+
+---
+
+# back to the example
+
+### does this make sense?  (yes it does)
+
+If we now change the miles driven and ask for `mph` again:
+
+```js
+obj.miles = 2000;
+clues(obj,function(mph) {
+  console.log(mph);
+});
+
+
+```
+
+We still get the original answer, as the property `mph` has already been resolved as a derived fact.
+
+A logic/facts object lazily transforms from containing logic functions to containing resolved set of facts (in the form of resolved promises).
+
+
+This means that clues always assumes context consistancy within a particular object.   When you need to switch context you need to switch objects (or manually clear out properties/objects from a given tree)
+
+---
+
+## the blueprint?  check the prototype!
+
+**Common pattern:**  define  logic in a static object (as the prototype) and then only provide instances of this logic/facts object to the `clues` function, each time a new context is required. 
+
+```js
+var Logic = {
+.....
+}
+
+```
+
+
+.pull-left[
+```js
+var objA = Object.create(Logic);
+objA.miles = 160;
+objA.hours = 2;
+
+clues(objA,function(mph) {
+  console.log(mph);
+});
+
+```
+]
+
+.pull-right[
+```js
+var objB = Object.create(Logic);
+objB.miles = 230;
+objB.hours = 5;
+
+clues(objB,function(mph) {
+  console.log(mph);
+});
+
+```
+]
+
+
+---
+
+
+
+
+## the blueprint?  check the prototype!
+
+... or use the property arguments of `Object.create`:
+
+```js
+var Logic = {
+.....
+};
+
+```
+
+
+.pull-left[
+```js
+var objA = Object.create(Logic,{
+  miles: {value: 160},
+  hours: {value: 2}
+});
+
+clues(objA,function(mph) {
+  console.log(mph);
+});
+
+```
+]
+.pull-right[
+```js
+var objB = Object.create(Logic,{
+  miles: {value: 230},
+  hours: {value: 5}
+});
+
+clues(objB,function(mph) {
+  console.log(mph);
+});
+
+```
+]
+
+
+We can also use advanced prototype tricks such as freezing any logic objects, preventing any accidental modifications:
+
+```js
+Object.freeze(Logic);
+```
+---
+
+
+# handling rejection
+```js
+{
+  "borrower.credit.tu.ficco": {
+    "error": true,
+    "ref": "ficco",
+    "fullref": "borrower.credit.tu.ficco",
+    "caller": "__user__",
+    "message": "ficco not defined",
+  }
+}
+```
+* Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.
+
+* If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref` the logic function. 
+
+* If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response. 
+
+* The rejection object will also contain `fullref` a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.
+
+* Any functions depending on the function that errored will be rejected with the exact same error
+
+
+
+---
+
+# handling rejection
+## pattern to distinguish between rejections and **errors**
+
+* The rejection handling by `clues` will not force errors into formal Error Objects
+
+* This can be useful in distinguishing between javascript errors (which are Error Object with `.stack`) and customer 'string' error messages (which may not have `.stack`).
+
+
+* If all 'known rejections' are thrown without a stack (i.e. `throw string` or `return Promise.reject(String)`) it is easy to distinguish between `Internal errors` and rejections.
+
+This feature can be utilized in any client-facing handler:
+```js
+  .then(null,function(e) {
+    if (e.stack) res.send(500,'Internal Error');
+    else res.send(e.message);
+  });
+```
+
+
+---
+
+# underscoring optionality
+### single underscore prefix
+
+Any argument to any function can be made optional by prefixing the argument name with an underscore. 
+
+If an error occurs to an optional argument, the function will still run but the value of the errored argument will simply be `undefined`
+
+### double-underscore prefix
+If an argument is prefixed with a double underscore, the value of the argument will not be `undefined`, but contain object representation of the error.  
+
+### obligatory warning
+You should probably never define a property name that starts with an underscore.  The only way to reach that argument is to request it (optionally) with three prefixed underscores (as first two are shaved off)
+
+---
+
+# underscoring optionality
+### Example:
+```js
+var obj = {
+  value : 42,
+  badCall : function() { throw 'This is an error'; }
+};
+
+// Here the function never gets run as the input 'bad' is required.  Rejected.
+clues(obj,function(badCall,value) {
+  console.log(badCall,value);
+},function(e) {
+  console.log('Error',e,e.stack);
+});
+
+```
+
+.pull-left[
+#### Single underscore
+```js
+// Here the function prints
+// "undefined 42". No rejection
+clues(obj,function(_badCall,value) {
+  console.log(_badCall,value);
+});
+```
+]
+
+
+.pull-right[
+#### Double  underscore
+```js
+// Here the function prints
+// [The rejection object] 42
+clues(obj,function(__badCall,value) {
+  console.log(__badCall,value);
+});
+```
+]
+
+---
+
+# array-defined functions
+### [arg1,arg2....arg,fn]
+
+Functions can be defined in array form, where the function itself is placed in the last element
+
+Prior element in the array are viewed as refs to the arguments of the function.
+
+This allows the definition of more complex arguments (including argument names with dots in them) and also allows for code minification (angular style)
+
+In the following example, the local variable `a` stands for the `input1` fact and `b` is the `input2` fact
+
+```js
+var Logic = {
+  test : ['input1','input2',function(a,b) {
+    ... function body ...
+  }]
+};
+```
+Warning: Any array whose **last element** is a function, will be handled like an array-defined function, like it or not. 
+
+---
+# array-defined functions
+Array defined functions can be nested as well.
+
+Additionally, standard global constructors can be used as functions, creating clear structures of of relations and casting:
+
+
+```js
+var Logic = {
+  M1 : 'M1',
+  M2 : {a:1,b:2},
+  M3 : 42,
+  recursive : function() {
+    return [
+      ['M1',String],
+      [ ['M2',Object],['M3',Number],Array ],
+      Array
+    ]
+  }
+}
+
+clues(Logic,function(recursive) {
+  console.log(recursive); // prints ['M1',[{a:1,b:2},42]]
+})
+
+```
+
+---
+
+# nesting and parenthood
+Logic object can contain objects (or functions that return objects) providing separate children scopes.
+
+Trees of child scopes can be traversed using dot notation, either by requesting a string path directly from the `clues` function or using dot notation for argument names in any array-defined function (see [above](#using-special-arrays-to-define-functions)).   
+
+
+```js
+var obj = {
+  drawer : { items : ['A','B','C','D' ] },
+  fourthItem : ['drawer.items.3',String]
+};
+
+// Prints A
+clues(obj,'drawer.items.0')
+  .then(console.log);             
+
+// Prints B C
+clues(obj,['drawer.items.1','drawer.items.2',function(a,b) {
+  console.log(a,b);
+}]);
+
+// Prints D
+clues(obj,function(fourthItem) {
+  console.log(fourthItem);
+});
+```
+
+---
+#nesting and parenthood
+
+### nothing passed on children, unless specified
+Children do not automatically inherit anything from parents.
+
+If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see [appendix](#moar-stuff-a-listening-to-your-parents))
+
+examples:
+.pull-left[
+```js
+var Parent = {
+  name : 'John',
+  child : function() {
+    return Object.create(child,{
+      parent : {value: this}
+    });
+  }
+}
+```
+]
+.pull-right[
+```js
+var Parent = {
+  name : 'John',
+  child : function(name) {
+    return Object.create(child,{
+      parentName : {value: name}
+    });
+  }
+}
+```
+]
+
+It is worth noting that `Object.create` by default doesn't enumerate the properties defined.  This means properties are accessable, but not visible.
+
+---
+
+#nesting and parenthood
+### complexity is the breakfast of champions
+In the previous example all the values of the nested tree were already determined.  But `clues` makes no distinction between resolved structures and unresolved when traversing down the tree. It crunches through any functions and promises along the way,  without mercy. 
+
+The following logic supports the same outcomes as the previous example:
+
+```js
+function obj() {
+  return {
+    drawer : function() {
+      return Promise.delay(2000)
+        .then(function() {
+          return {
+            items : [
+              'A','B','C',Promise.delay(1000).then(function() { return 'D';})
+            ]
+          };
+        });
+    },
+    fourthItem : ['drawer.items.3',String]
+  };
+}
+```
+---
+
+# ᐅ as an alias for a dot
+
+Clues provides an alias for dots (ᐅ - unicode U+07CD) in nested paths. Using this alias, nested arguments can be defined directly in the function signature. This makes functional testing easier, as you can call the function directly with the values you want to test for.  The downside to this approach is that argument names can become more cumbersome.
+
+```js
+clues(obj,function(drawerᐅitemsᐅ1,drawerᐅitemsᐅ2) {
+  console.log(drawerᐅitemsᐅ1,drawerᐅitemsᐅ2);
+});
+```
+
+---
+
+# global variables
+The third parameter to the `clues` function is an optional global object, whose properties are accessible in any scope (as a fallback).  This makes it particularly easy to provide services or general inputs (from the user) without having to drag them manually down the tree 
+
+```js
+var Logic = {
+  repeat : ['input.verb',function(verb) { return 'I am '+verb; }],
+  child : function() {
+    return {
+      activity : ['input.childVerb',function(verb) {
+        return 'Child is '+verb;
+      }]
+    }
+  }
+};
+
+var obj = Object.create(Logic);
+
+clues(obj,'repeat',{input:{verb:'coding'}})
+  .then(console.log) ; // Prints "I am coding"
+
+clues(obj,'parent.child.activity',{input:{childVerb:'sleeping'}})
+  .then(console.log); // Prints "Child is sleeping"
+```
+*PS: reptiles-server automatically puts `req` `res` and `input` (combination of `req.body` `req.query` and `req.param`) into `global` scope*
+
+---
+# $ at your service
+Any function whose property name starts with a `$` will simply be resolved as the function itself, not the executed result of the clues machine.  This is a great method to pass global functions (i.e. services) into any scope (as they won't be morphed into a promise on their value).
+
+```js
+var Global = {
+  $emit : function(d) {
+    console.log('emitting ',d);
+  }
+};
+
+var Cabinet = {
+  drawer : {
+    open : function($emit) {
+      $emit('opened drawer');
+      return 'ok';
+    },
+    close : function($emit) {
+      $emit('closed drawer');
+      return 'ok';
+    }
+  }
+};
+
+var obj = Object.create(Cabinet);
+clues(obj,['drawer.open','drawer.close',Object],Global);
+```
+
+---
+
+# $property
+#### lazily create children by "missing" reference
+If a particular property can not be found in a given object, clues will try to locate a `$property` function.
+
+If the `$property` exists, it is executed with the missing property name as the first argument.  The missing value is set to be the outcome of this function call
+
+```js
+obj = {
+  users : {
+    all : function() {
+      return db.collection('users.all')
+        .find({},{user_id:true});
+    },
+    $property : function(ref) {
+      return db.collection('users')
+        .find({user_id:ref})
+        .then(function(user) {
+          if (!user) throw 'USER_NOT_FOUND';
+          else return user;
+        })
+    }
+  }
+};
+```
+---
+# $property
+
+```js
+var obj = {
+  users : {
+    all : function() {
+      return db.collection('users.all')
+        .find({},{user_id:true});
+    },
+    $property : function(ref) {
+      return db.collection('users')
+        .find({user_id:ref})
+        .then(function(user) { return user; });
+    }
+  }
+};
+
+clues(obj,'users.all').then(console.log)  // lets say we get [1,3,5];
+
+clues(obj,'user.3.name').then(console.log)  // would print the 'name' of user 3
+```
+ As soon as `user3.name` is requested, the `obj` has three properties: 
+```js
+ {
+   users : [Promise],
+   $property : [Function],
+   3 : [Promise]
+ }
+```
+---
+# $property
+###  what about fibonacci?
+Another example of the memoization with `$property` 
+```js
+var fib = {
+  0: 0,
+  1: 1,
+  $property : function(n) {
+    return [''+(n-1),''+(n-2),function(a,b) {
+      return a+b;
+    }];
+  }
+};
+
+clues(fib,['12','14','25','1000',Array])
+  .then(console.log)
+```
+
+The resulting object is filled with resolved promise:
+
+```js
+fib === {0: 0, 1: 1, 2: [Promise], 3: [Promise]..... 1000: [Promise]}
+``` 
+
+---
+
+# $external
+#### when you have no clue about the future 
+If an undefined property can not locate a `$property` function it will look for an `$external` function.
+
+The purpose of the `$external` function is similar except that the argument passed to the function will be **the full remaining reference** (in dot notation), not just the next reference in the chain.
+
+Here is a quick example:
+```js
+var Logic = {
+  myinfo : ['externalApi.user.info',Object],
+  externalApi : function(userid) {
+    return {
+      $external : function(ref) {
+        ref = ref.replace(/\./g,'/');
+        return request.getAsync({
+          url : 'http://api.vendor.com/api/'+ref,
+          json : {user_id : userid}
+        });
+      }
+    };
+  }
+};
+
+var obj = Object.create(Logic,{userid:{value:'admin'}});
+
+// This clues command sends off an http request to
+// http://api.vendor.com/api/user/info with {"user_id" : "admin"} as the body
+// and resolves 'externalApi['user.info']' and 'myinfo' with the results
+clues(obj,['myinfo',console.log))
+
+```
+
+
+---
+# $external
+#### a quick external API example
+
+```js
+var Logic = {
+  myinfo : ['externalApi.user.info',Object],
+  externalApi : function(userid) {
+    return {
+      $external : function(ref) {
+        ref = ref.replace(/\./g,'/');
+        return request.getAsync({
+          url : 'http://api.vendor.com/api/'+ref,
+          json : {user_id : userid}
+        });
+      }
+    };
+  }
+};
+
+var obj = Object.create(Logic,{userid:{value:'admin'}});
+
+// This clues command sends off an http request to
+// http://api.vendor.com/api/user/info with {"user_id" : "admin"} as the body
+// and resolves 'externalApi['user.info']' and 'myinfo' with the results
+
+clues(obj,['myinfo',console.log]))
+
+```
+---
+
+# function that returns a function that returns a...
+If the resolved value of any function is itself a function, that returned function will also be resolved (within the same scope).
+
+This allows for very powerful 'gateways' that constrain the tree traversal only to segments that are relevant for a particular sets of parameters.
+```js
+Logic = {
+  tree_a : {....},
+  tree_b : {....},
+  next_step: function(step) {
+    if (step === 'a')
+      return ['tree_a',Object]
+    else
+      return ['tree_b',Object];
+    }
+  }
+}
+
+clues(Logic,'continue',{step:'a'})
+```
+---
+
+# function that returns a function that returns a...
+Also when extra information is dynamically required you can get it by returning a function which fetches and processes this additional info:
+
+.pull-left[
+### contingent fetch
+```js
+var Logic = {
+  extra : function() {....}
+  data : function(order) {
+    if (order.has_extra)
+      return function(extra) {
+        order.extra = extra;
+        return order;
+      }
+    return order;
+  }
+}
+```
+]
+
+.pull-right[
+### sequential fetch
+```js
+var Logic = {
+  info : function(person) {
+    return function(order) {
+      return function(card) {
+        return {
+          person : person,
+          order : order,
+          card : card
+        };
+      };
+    };
+  }
+}
+```
+]
+ 
+---
+
+# private parts
+#### access control through function gateways
+Access to certain sub-trees of a fact/logic can be controlled through closures that evaluate user privileges before handing over the privileged parts.  
+
+Example, assuming a global object `res` that has a `user` record that defines whether a user has admin privileges  or not:
+
+```js
+var User = {
+  info : function(userid) {.....},
+  changePassword : ['input.password','input.confirm',function() {.....},
+  admin : ['req.user.admin',function(admin) {
+    if (!admin) throw 'NO_ACCESS';
+    return {
+      delete : function() {...},
+      logs : function () {...}
+    }
+```
+Unauthorized users will get an error if they try to access any of the admin functions, while admins have unlimited access.   
+
+---
+
+
+
+# private scope
+#### 1st argument of array defined function can be scope
+
+But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?
+
+Array defined functions can be used to form gateways from one tree into a subtree of another.
+
+#### [**scope**,arg1,arg2.....,fn]
+If the first element of an array-defined function is
+  * an object with `zero length` or 
+  * a function that evaluates into an object
+
+that object provides a separate scope the function will be evaluated in.
+
+The array-defined function can therefore act as a selector from this private scope
+
+Lets go through a quick example
+
+---
+# private scope
+
+Lets assume we have a logic that contains
+* a secret
+* a hashing function on password + secret
+* a `public ` function that returns the user record based on userid+hash
+
+... and that we don't want to provide access to the secret or the hash
+```js
+var PrivateLogic  = {
+  secret : 'Hidden secret',
+
+  hash : function(secret,password) {
+    return crypto.createHash('sha1')
+      .update(secret)
+      .update(password)
+      .digest('hex');
+  },
+
+  public : function(userid,hash) {
+    return db.find({user_id:user_id,password:hash})
+      .then(function(d) {
+        if (!d) throw 'NOT_FOUND';
+        return {name:d.name,email:d.email};
+      });
+  }
+};
+```
+---
+# private scope
+Here is one way to use the private logic (with full traversal) but only expose the `public` route
+```js
+var Logic = {
+  user : function(_userid,_password) {
+    // Create instance of private with required inputs
+    var private = Object.create(PrivateLogic,{
+      user_id : {value: _userid},
+      password : {value: password}
+    });
+    // return only the public route
+    return [private,'public',Object];
+  }
+};
+
+var obj = Object.create(Logic,{
+  userid : {value: 'user123'},
+  password : {value: 'abc123'}
+});
+
+clues(obj,'user.name')
+  .then(console.log,console.log);  // Prints  name
+```
+---
+
+# private scope
+
+In this example `user.info` points to an instance of `PrivateLogic.public` without providing any access to the other properties or the private object, `secret` or `hash`. 
+
+It is worth noting that names of private properties might still be exposed under `fullref` of an error. 
+
+For example if password is not provided above, the fullref of the error will be `user.public.hash.password` with the message `password not defined`
+
+The gateway function could have been with argument names inside or outside the function, even extra arguments.  What really matters is what the gateway function returns:
+
+```js
+return [private,function(public) { return public;}];
+return [private,function(public,hash,secret) { return public;}];
+return [private,'public','hash',function(a,b) { return a;}];
+
+```
+
+---
+
+# $private as a function name
+
+An even easier way to declare functions as private is simply naming them $private (or private). Any functions named $private will not be accessible directly, only indirectly through a different function, as a dependency.
+
+Specifically the `caller` has to be a defined value (as opposed to `undefined`) and not equal to __user__).  Here is a quick example:
+
+```js
+var facts = {
+  a : function $private() { return 2; },
+  b : function(a) { return a+2; }
+};
+
+clues(facts,'b').then(console.log) // prints 4
+clues(facts,'a').catch(console.log)  // prints error
+```
+
+Keep in mind that `$private` function values can be inadvertedly exposed if a receiving function exposes the contents of the private dependency to the user.
+
+
+---
+# sorry but I have to cancel
+Each promise chain is cancellable when cancellation is turned on in the Bluebird config. Here is a pseudo example of how cancellation can be incorporated into an expensive database query:
+```js
+clues.Promise.config({cancellable: true});
+
+logic.transactions = function(userid) {
+  var connection = db.connect({host:...,});
+  return new Promise(function(resolve,reject,onCancel) {
+    connection.get({'userid':userid}, function(err,d) {
+      if (err) return reject(err);
+      else resolve(JSON.stringify(d));
+    });
+
+    onCancel && onCancel(function() {
+      connection.close();
+    })
+  });
+}
+```
+---
+# sorry but I have to cancel
+and here is an example express endpoint that executes the cancellation defined previously on abort:
+
+```js
+express()
+  .get('/transactions/:userid',function(req,res) {
+    var facts = Object.create(logic);
+    facts.userid = req.param.userid;
+    var transactions = clues(facts,'transactions')
+      .then(res.end.bind(res));
+    req.on('abort',function() { 
+      transactions.cancel();
+    });
+```
+
+---
+
+# Summary
+
+When solving for a property name:
+* if exist evaluate/return
+* if not, does it exist in `$global`?
+* if not, does `$property` exist?
+* if not, does `$external` exist?
+* if not - reject on "not found"
+
+If answer is an array:
+ * is the last argument != function?   just return array
+ * is the first argument object or fn?   Private scope arrayfn
+ * else Regular array-defined function
+
+If answer is a function
+  * evaluate function (repeat)
+---
+# sensible patterns
+
+Since clues doesn't impose a particular structure there are probably as many bad patterns as good ones.
+
+One useful pattern is to use array-defined functions only to create routes between variables.  This means all actual functions all have regular signatures, can be called directly and tested independently of any i/o.
+
+```js
+module.exports = {
+  // Default paths for any inputs used
+  parent : undefined,
+  app : ['parent.app',Object],
+  processing : ['parent.processing',Object],
+  state_restrictions : ['parent.static.data.state_restrictions',Object],
+  borrower_rate : ['parent.borrower.rate',Object],
+  coborrower_rate : ['parent.coborrower.rate',Object],
+
+  // here are the calculations
+  defaults : function(app,borrower_rate,_coborrower_rate) {...},
+  data : function(processing,defaults,app,by_state) {..},
+  values : function(data) {....},
+  cashflow : function(values) {....}
+};
+```
+
+---
+class: center, middle, inverse
+
+# https://github.com/ZJONSSON/clues
+
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
