@@ -2,21 +2,41 @@
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Test Coverage][circle-image]][circle-url]
 
+**clues.js** is a lean-mean-promisified-getter-machine that crunches through nested javascript objects, resolving functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just under 200 loc) that dynamically resolves dependency trees and memoizes resolutions (derived facts) along the way.   It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls. 
 
-**clues.js** is a lean-mean-promisified-getter-machine that crunches through any javascript objects, including complex trees,  functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just over 100 loc) that dynamically resolves dependency trees and memoizes resolutions (lets call them derived facts) along the way.   
+Example:
 
-*[Prior versions](https://github.com/ZJONSSON/clues/tree/v2) of `clues` were based on internal scaffolding holding separate logic and fact spaces within a `clues` object.  Clues 3.x is a major rewrite into a simple  superpowered getter function.  Clues apis might be backwards compatible - as long as you merge logic and facts into a single facts/logic object and use the new getter function directly for any resolutions.  Other libraries exploring similar concepts include  [curran/reactive-model](https://github.com/curran/reactive-model) and [ZJONSSON/instinct](https://github.com/ZJONSSON/instinct.js)*
+```js
+var obj = {
+  miles : 220,
+  hours : Promise.delay(100).then(d => 2.3),
+  minutes : hours => hours * 60,
+  mph : (miles,hours) => miles / hours,
+  car : {
+    model: 'Tesla'
+  }
+};
 
-#### Changes in version 3.4
-* Upgrade Bluebird 3.x affects cancellation mechanics
-* Debug mechanism for wait time of function calls
-* Improvements to reptile server
+// get mph directly (second argument references what we want to solve for)
+clues(obj,'mph')
+  .then(console.log);
+
+// get multiple properties through a function as second argument
+// - the fn is only executed when all the arguments have been resolved
+clues(obj,function(minutes,mph,carᐅmodel) {
+  console.log(`Drove for ${minutes} at ${mph} miles/hour in a ${carᐅmodel}`);
+});
+```
+
+Clues recursively solves for properties of nested object.  Whenever `clues` hits a property that is an unresolved function it will parse the argument names (if any) and attempt to resolve the argument values (from properties within same scope that have the same name as each argument).  Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution.   If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..   Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.   
 
 #### Function signature
 The basic function signature is simple and **always** returns a promise:
+
 #### `clues(obj,fn,[$global])`
+
 ##### logic/facts (first argument)
-The first argument of the clues function should be the object containing the logic/facts requested (or a function that delivers this object).    The logic/facts object is any Javascript object, containing any mix of the following properties (directly and/or through prototype chains):
+The first argument of the clues function should be the object containing the logic/facts requested (or a function/promise that delivers this object).    The logic/facts object is any Javascript object, containing any mix of the following properties (directly and/or through prototype chains):
 
 * Static values (strings, numbers, booleans, etc)
 * Functions (i.e. logic) returning anything else in this list (supports async/await)
@@ -40,39 +60,8 @@ clues(obj,function(person) { console.log(person); }) // by function
 clues(obj,['person',console.},log]);                  // by array defined function
 var person = await clues(obj,'person')               // Using await inside async function
 ```
-##### global (optional third argument)
-The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.
 
-`clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
-
-##### caller and fullref (internal)
-As clues traverses an object by recursively calling itself each step of the way it passes information about `caller`,  i.e. which reference is requesting each property and `fullref` a delimited list of the traversed dependency path so far. A caret (`^`) in the fullref path  denotes a dependency relationship (through function argument) whereas a dot (`.`) signals parent-child traversal.
-
-The full function signature (with the internal arguments)  is therefore:
-`function clues(obj,fn,[$global],[caller],[fullref]) {...`
-
-and here is an advanced example:
-`clues(obj,'person',{userid:'admin',res:res},'__user__','top.child') `
-### the mean function resolution machine
-Whenever `clues` hits a property that is an unresolved function it will parse the argument names (if any) and attempt to resolve the argument values (from properties within same scope that have the same name as each argument).  Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution.   If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..   Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.   
-
-```js
-var obj = {
-  miles : 220,
-  hours : Promise.fulfilled(2.3),  // we can also define as promise
-  minutes : hours => hours * 60,
-  mph : (miles,hours) => miles / hours
-};
-
-// get mph directly
-clues(obj,'mph').then(console.log);
-
-// get multiple properties through a function call
-clues(obj,function(minutes,mph) {
-  console.log('Drove for '+minutes+' min at '+mph+' mph');
-});
-```
-There are only a few restrictions and conventions you must into account when defining property names.
+There are only a few restrictions and conventions you must into account when defining property names:
 
 * Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (great for services)
 * [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (if they are functions)
@@ -87,8 +76,23 @@ There are only a few restrictions and conventions you must into account when def
 
 That's pretty much it.
 
+##### global (optional third argument)
+The third argument is an optional [global object](#global-variables), whose properties are available from any scope.  The global object itself is handled as a logic/facts object and will be traversed as required.  Examples of variables suited for global scope are user inputs and services.
+
+`clues(obj,'person',{userid:'admin',res:res}).then(console.log);`
+
+##### caller and fullref (internal)
+As clues traverses an object by recursively calling itself each step of the way it passes information about `caller`,  i.e. which reference is requesting each property and `fullref` a delimited list of the traversed dependency path so far. A caret (`^`) in the fullref path  denotes a dependency relationship (through function argument) whereas a dot (`.`) signals parent-child traversal.
+
+The full function signature (with the internal arguments)  is therefore:
+`function clues(obj,fn,[$global],[caller],[fullref]) {...`
+
+and here is an advanced example:
+`clues(obj,'person',{userid:'admin',res:res},'__user__','top.child') `
+
+
 ### reusing logic through prototypes 
-Since `clues` modifies any functional property from being a reference to the function to a reference to the promise of their outcome, a logic/facts object lazily transforms from containing mostly logic functions to containing resolved set of facts (in the form of resolved promises).
+Since `clues` modifies any object property referencing a function to the promise of the outcome, a logic/facts object lazily transforms from containing mostly logic functions to containing resolved set of facts (in the form of resolved promises).
 
 An entirely fresh logic/facts object is required for a different context (i.e. different set known initial facts).  A common pattern is to define all logic in a static object (as the prototype) and then only provide instances of this logic/facts object to the `clues` function, each time a new context is required.   This way, the original logic functions themselves are never "overwritten", as the references in the clones switch from pointing to a function in the prototype to a promise on its resolution as each property is lazily resolved on demand.
 
@@ -131,7 +135,7 @@ obj = Object.create(Logic,{
 
 ```
 ### handling rejection
-Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref` the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  The rejection object will also contain `fullref` a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.  The rejection handling by `clues` will not force errors into formal Error Objects, which can be useful to distinguish between javascript errors (which are Error Object with `.stack`) and customer 'string' error messages (which may not have `.stack`).
+Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref`, the name of the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  The rejection object will also contain `fullref`, a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.  The rejection handling by `clues` will not force errors into formal Error Objects, which can be useful to distinguish between javascript errors (which are Error Objects with a defined `.stack` property) and customer 'string' error messages (which may not have `.stack`).
 
 Example: passing thrown string errors to the client while masking javascript error messages
 ```js
@@ -144,7 +148,10 @@ Example: passing thrown string errors to the client while masking javascript err
 You can provide a function called `$logError` in the `$global` object to record any true javascript errors (with `.stack`) when they occur. The `$logError` function will be called with the error object as first argument and `fullref` as the second argument.  For proper logging it is important to capture the error at source, as the dependencies might be optional - in which case the error never reaches the original request.
 
 ### making arguments optional with the underscore prefix
-If any argument to a function resolves as a rejected promise (i.e. errored) then the function will not run and simply be rejected as well.  But sometimes we want to continue nevertheless.  Any argument to any function can be made optional by prefixing the argument name with an underscore.   If the resolution of the optional argument returns a rejected promise (or the optional argument does not exist), then the value of this argument to the function will simply be `undefined`.   
+If any argument to a function resolves as a rejected promise (i.e. errored) then the function will not run and will also be rejected.  But sometimes we want to continue nevertheless (example: user input that is optional).  Any argument to any function can be made optional by prefixing the argument name with an underscore.   If the resolution of the optional argument returns a rejected promise (or the optional argument does not exist), then the value of this argument to the function will simply be `undefined`.   
+
+In the following example we include a property `badCall` that returns a rejection.  Adding underscores to any reference to `badCall` will make the dependency optional:
+
 ```js
 var obj = {
   value : 42,
@@ -168,7 +175,7 @@ Please keep in mind that any variable that is referred to as optional in a funct
 **Caveat**: You should probably never define a property name that starts with an underscore.  The only way to reach that argument is to request it with three prefixed underscores (as the first two are shaved off by the optional machinery), and even then it doesn't really make sense.
 
 ### using special arrays to define functions
-Functions can be defined in array form, where the function itself is placed in the last element, with the prior elements representing the full argument names required for the function to run.  This allows the definition of more complex arguments (including argument names with dots in them) and also allows for code minification (angular style)
+Users of Angular might be familiar with the array definition of function dependencies.  Clues accepts a similar construct with  functions defined in array form, where the function itself is placed in the last element and prior elements represent the full argument names required for the function to run.  This allows the definition of more complex arguments (including argument names with dots in them) and also allows for code minification (angular style)
 
 In the following example, the local variable `a` stands for the `input1` fact and `b` is the `input2` fact
 
@@ -190,7 +197,7 @@ var Cabinet = {
   drawer : {
     items : ['A','B','C','D' ]
   },
-  fourthItem : ['drawer.items.3',String]
+  fourthItem : ['drawer.items.3',String]  // `String` is a native js function that converts the first argument to string
 };
 
 // Create a clone
@@ -210,9 +217,9 @@ clues(obj,function(fourthItem) {
   console.log(fourthItem);
 });
 ```
-It is worth noting that children do not inherit anything from parents.   If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see [appendix](#moar-stuff-a-listening-to-your-parents))
+It is worth noting that children do not inherit anything from parents.   If you really want your children to listen to their parents (or their cousins) you have to get creative, passing variables down explicitly or providing a root reference in the globals (see [appendix](#moar-stuff-a-listening-to-your-parents)).   
 
-##### ᐅ as an alias for a dot
+### ᐅ as an alias for a dot
 Clues provides an alias for dots (ᐅ - unicode U+1405) in nested paths.  Using this alias, nested arguments can be defined directly in the function signature.  The downside to this approach is that argument names can become more cumbersome.
 
 Here is the second example using the alias
@@ -249,7 +256,9 @@ Keep in mind that since the provided logic in this example is a function (creati
 
 
 ### global variables
-The third parameter to the `clues` function is an optional global object, whose properties are accessible n any scope (as a fallback).  This makes it particularly easy to provide services or general inputs (from the user) without having to 'drag those properties manually' through the tree to ensure they exist in each scope where they are needed.
+The third parameter to the `clues` function is an optional global object, whose properties are accessible in any scope (as a fallback if a property name is not found in current object).  This makes it particularly easy to provide services or general inputs (from the user) without having to 'drag those properties manually' through the tree to ensure they exist in each scope where they are needed.
+
+The following example requires `input` object to be defined in `$global`:
 
 ```js
 var Logic = {
@@ -405,7 +414,7 @@ Naming a function as `$external` (i.e. setting `Function.name`) acts as a shorth
 ...
    externalApi : function(userid) {
      return function $external(ref) {
-        ref = ref.replace(/\.h,'/');
+        ref = ref.replace(/\./g,'/');
         ....
      }
    }
@@ -426,7 +435,7 @@ Logic = {
   }
 }
 
-clues(Logic,'continue',{step:'a'})
+clues(Logic,'next_step',{step:'a'})
 ```
 ### private parts
 #### access control
@@ -445,7 +454,8 @@ var User = {
       logs : function () {...}
     }
 ```
-Unauthorized users will get an error if they try to query any of the admin functions, while admins have unlimited access.    
+Unauthorized users will get an error if they try to query any of the admin functions, while admins have unlimited access.
+
 #### using first element to define private scope
 But what if we want to hide certain parts of the tree from direct traversal, but still be able to use those hidden parts for logic?   Array defined functions can be used to form gateways from one tree into a subtree of another.  If the first element of an array-defined function is an object (and not an array) or a function, that object provides a separate scope the function will be evaluated in.  The function can therefore act as a selector from this private scope.
 
