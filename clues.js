@@ -7,8 +7,8 @@
     self.clues = clues;
   }
 
-  var reArgs = /function.*?\(([^)]*?)\).*/;
-  var reEs6 =  /\({0,1}(.*?)\){0,1}\s*=>/;
+  var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
+  var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
 
   function matchArgs(fn) {
     if (!fn.__args__) {
