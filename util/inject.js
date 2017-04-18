@@ -29,24 +29,25 @@ function inject(obj, prop, $global) {
       if (!next) {
         original = o[item];
         if (original !== undefined)
-          o['original_'+item] = function private() {
+          Object.defineProperty(o,'original_'+item,{writable: true, value: function private() {
             return original;
-          };
+          }});
         if (value.error)
           value = clues.Promise.reject(value);
         if (o[item] && o[item]._fulfill && o[item].isPending())
           o[item]._fulfill(value);
         else
-          o[item] = value;
-      } else {
-        if (original !== undefined) 
-          o[next] = function() {
-          return clues(o,original,$global,'set','set')
+          Object.defineProperty(o,item,{value: value, enumerable: true, writable: true});
+      } else if (original !== undefined)  {
+        var fn = function() {
+          return clues(o,original || [],$global,'set','set')
             .then(d => {
               o = d;
               return clues.Promise.try(o ? nextLevel : Object).then( () => d);
             });
         };
+
+        Object.defineProperty(o,next,{value: fn, enumerable: true, writable: true});
       }
     }
 
