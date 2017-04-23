@@ -27,7 +27,7 @@ var injected = function($global) {
     'db.user' : function(userid) {
       return { desc: 'this is an injected response', userid: userid};
     },
-    'impossible.to.reach' : 42,
+    'impossible.to.reach' : 43,
     'possible' : {},
     'possible.value': 42,
     'never_traversed.value' : 11
@@ -49,12 +49,10 @@ describe('inject',function() {
       });
   });
 
-  it('ignores base paths that do not exists',function() {
+  it('creates base paths that do not exists',function() {
     return clues(injected,'impossible.to.reach',{})
-      .then(function() {
-        throw 'SHOULD_ERROR';
-      },function(e) {
-        assert.equal(e.message,'impossible not defined');
+      .then(function(d) {
+        assert.equal(d,43); 
       });
   });
 

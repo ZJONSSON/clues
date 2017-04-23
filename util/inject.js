@@ -38,7 +38,7 @@ function inject(obj, prop, $global) {
           o[item]._fulfill(value);
         else
           Object.defineProperty(o,item,{value: value, enumerable: true, writable: true});
-      } else if (original !== undefined)  {
+      } else {
         var fn = function() {
           return clues(o,original || [],$global,'set','set')
             .then(d => {
