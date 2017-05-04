@@ -74,7 +74,11 @@
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
-        return clues(obj,fn,$global,caller,fullref);
+        var result = clues(obj,fn,$global,caller,fullref);
+        if (ref) {
+          logic[ref] = result;
+        }
+        return result;
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];

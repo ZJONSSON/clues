@@ -66,4 +66,28 @@ describe('Array functions',function() {
       assert.deepEqual(d,[10,[300,310]]);
     });
   });
+  
+  it('should only execute arrays once', function() {
+    var counter = 0;
+    var otherContext = {
+      M1: Promise.delay(100, 10),
+      M2: Promise.delay(200, 20)
+    };
+
+    var logic = {
+      M3: [otherContext, 'M1', 'M2', function(a,b) {
+        counter++;
+        return a + b;
+      }]
+    }
+    var facts = Object.create(logic);
+
+    return Promise.all([clues(facts,'M3'), clues(facts,'M3')])
+      .then(function(results) {
+        assert.equal(results[0],30);
+        assert.equal(results[1],30);
+        assert.equal(counter, 1);
+      });
+  });
+
 });
