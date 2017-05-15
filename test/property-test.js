@@ -29,6 +29,10 @@ describe('$property',function() {
     shorthand : function $property(ref) {
       return +ref * this.a;
     },
+    as_argument: function ($property) {
+      return $property * this.a;
+    },
+    as_argument_es6 : a => $property => $property * a,
     concurrent : {
       $property : function() {
       return clues.Promise.delay(Math.random()*1000)
@@ -144,6 +148,36 @@ describe('$property',function() {
           assert.equal(d,10);
           assert.equal(facts.shorthand.value()['2'].value(),10);
           return clues(facts,'shorthand.4');
+        })
+        .then(function(d) {
+          assert.equal(d,20);
+          assert.equal(facts.shorthand.value()['4'].value(),20);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
+        });
+    });
+  });
+
+  describe('when argument name is $property',function() {
+    it('acts as a shorthand for empty object with $property',function() {
+      return clues(facts,'as_argument.2')
+        .then(function(d) {
+          assert.equal(d,10);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
+          return clues(facts,'as_argument.4');
+        })
+        .then(function(d) {
+          assert.equal(d,20);
+          assert.equal(facts.shorthand.value()['4'].value(),20);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
+        });
+    });
+
+    it('as ES6 acts as a shorthand for empty object with $property',function() {
+      return clues(facts,'as_argument_es6.2')
+        .then(function(d) {
+          assert.equal(d,10);
+          assert.equal(facts.shorthand.value()['2'].value(),10);
+          return clues(facts,'as_argument_es6.4');
         })
         .then(function(d) {
           assert.equal(d,20);

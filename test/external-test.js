@@ -18,6 +18,10 @@ describe('$external',function() {
     shorthandThis : function $external() {
       return this;
     },
+    as_argument: function($external) {
+      return 'answer:'+$external;
+    },
+    as_argument_es6: $external => 'answer:'+$external,
     concurrent : function $external() {
       return clues.Promise.delay(Math.random()*1000)
         .then(function() {
@@ -103,5 +107,37 @@ describe('$external',function() {
         });
     });
   });
+
+  describe('when argument name is $external',function() {
+    it('acts as a shorthand for empty object with $external',function() {
+      return clues(facts,'as_argument.first')
+        .then(function(d) {
+          assert.equal(d,'answer:first');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          return clues(facts,'as_argument.second');
+        })
+        .then(function(d) {
+          assert.equal(d,'answer:second');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          assert.equal(facts.shorthand.value().second.value(),'answer:second');
+        });
+    });
+
+    it('as ES6 acts as a shorthand for empty object with $external',function() {
+      return clues(facts,'as_argument_es6.first')
+        .then(function(d) {
+          assert.equal(d,'answer:first');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          return clues(facts,'as_argument_es6.second');
+        })
+        .then(function(d) {
+          assert.equal(d,'answer:second');
+          assert.equal(facts.shorthand.value().first.value(),'answer:first');
+          assert.equal(facts.shorthand.value().second.value(),'answer:second');
+        });
+    });
+    
+  });
+
 
 });
