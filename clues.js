@@ -9,12 +9,13 @@
 
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
+  var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
 
   function matchArgs(fn) {
     if (!fn.__args__) {
       var match = fn.prototype && fn.prototype.constructor.toString() || fn.toString();
       match = match.replace(/^\s*async/,'');
-      match = reArgs.exec(match) || reEs6.exec(match);
+      match = reArgs.exec(match) || reEs6.exec(match) || reEs6Class.exec(match);
       fn.__args__ = match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {
