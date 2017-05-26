@@ -1,20 +1,14 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-
-var logic = Promise.delay(100).then(function() {
+const Logic = Promise.delay(100).then(function() {
   return {
     $constant : 380,
-     a :  function($constant) { return {b: $constant}; }
+    a :  function($constant) { return {b: $constant}; }
   };
 });
 
-describe('When logic is a promise',function() {
-  it('is used when resolved',function() {
-    return clues(logic,'a.b')
-      .then(function(d) {
-        assert.equal(d,380);
-      });
-  });
+t.test('When logic is a promise', async t => {
+  t.same( await clues(Logic,'a.b'),380,'logic is resolved before solving');
 });

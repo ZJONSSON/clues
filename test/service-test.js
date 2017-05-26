@@ -1,59 +1,34 @@
-var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const t = require('tap');
 
-describe('$ as a first letter',function() {
+t.test('$ as a first letter', {autoend:true}, t => {
 
-  var logic = {
+  const Logic = {
     a : 10,
     b : 11,
-    $logic_service : function(a) {
-      return a;
-    },
-    top : function(a) {
-      return {
-        $nested_service : function(b) {
-          return a+b;
-        }
-      };
-    }
-  
+    $logic_service : a => a,
+    top : a => ({ $nested_service : b => a + b })
   };
 
-  var global = {
-    $global_service : function(b) {
-      return b;
-    }
-  };
+  const global = { $global_service : b => b };
 
-  describe('in logic',function() {
-    it ('should return a function',function() {
-      return clues(Object.create(logic),'$logic_service',Object.create(global))
-        .then(function($logic_service) {
-          assert.equal(typeof $logic_service,'function');
-          assert.equal($logic_service(20),20);
-        });
-      });
+  t.test('in logic', async t => {
+    const d = await clues(Object.create(Logic),'$logic_service',Object.create(global));
+    t.same(typeof d, 'function','returns a function');
+    t.same(d(20),20,'function works');
   });
 
-
-  describe('in nested logic',function() {
-    it ('should return a function',function() {
-      return clues(Object.create(logic),'top.$nested_service',Object.create(global))
-        .then(function($nested_service) {
-          assert.equal(typeof $nested_service,'function');
-          assert.equal($nested_service(20),30);
-        });
-      });
+  t.test('in nested logic', async t => {
+    const d = await clues(Object.create(Logic),'top.$nested_service',Object.create(global));
+    t.same(typeof d, 'function','returns a function');
+    t.same(d(20),30,'function works');
   });
 
-  describe('in global',function() {
-    it('should return a function',function() {
-      return clues(Object.create(logic),function($logic_service) {
-          assert.equal(typeof $logic_service,'function');
-          assert.equal($logic_service(20),20);
-        },Object.create(global));
-    });
+  t.test('in global', async t => {
+    await clues(Object.create(Logic),$global_service => {
+      t.same(typeof $global_service, 'function','returns a function');
+      t.same($global_service(20),20,'function works');
+    },Object.create(global));
   });
+
 });
-
-

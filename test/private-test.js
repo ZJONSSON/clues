@@ -1,11 +1,11 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
 function shouldErr() { throw 'Should throw an error'; }
 
-describe('private functions',function() {
-  var logic = {
+t.test('private functions', {autoend: true}, t => {
+  const Logic = {
     M1 : function() { return Promise.delay(100,10); },
     M2 : function $private() { return Promise.delay(20,300); },
     M3 : ['M1','M2',function private(M1,M2) { return M1+M2; }],
@@ -16,48 +16,32 @@ describe('private functions',function() {
       ) { return M3+M4; }
   };
 
-  var facts = Object.create(logic);
-
-  describe('before resolution ',function() {
-    it('regular fn not disclosed',function() {
-      return clues(facts,'M2')
-        .then(shouldErr,function(e) {
-          assert.equal(e.message,'M2 not defined');
-          assert.equal(facts.M2,logic.M2);
-        });
+  t.test('before resolution', {autoend: true}, t => {
+    t.test('private regular function', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'M2').catch(Object);
+      t.same(e.message,'M2 not defined','errors as not defined');
+      t.same(facts.M2,Logic.M2,'fn is not run');
     });
 
-    it('array defined fn not disclosed',function() {
-      return clues(facts,'M3')
-        .then(shouldErr,function(e) {
-          assert.equal(e.message,'M3 not defined');
-          assert.equal(facts.M3,logic.M3);
-        });
-    });
+    t.test('private array function', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'M3').catch(Object);
+      t.same(e.message,'M3 not defined','errors as not defined')
+      t.same(facts.M3, Logic.M3,'fn is not run');
+    })
   });
 
-  describe('after resolution',function() {
-    it('should be accessible indirectly',function() {
-      return clues(facts,'MTOP')
-      .then(function(d) {
-        assert.equal(d,380);
-      });
-    });
+  t.test('after resolution', async t => {
+    const facts = Object.create(Logic);
+    const MTOP = await clues(facts,'MTOP');
+    const M2 = await clues(facts,'M2').catch(Object);
+    const M3 = await clues(facts,'M3').catch(Object);
 
-    it('regular fn promise not disclosed',function() {
-      return clues(facts,'M2')
-        .then(shouldErr,function(e) {
-          assert.equal(e.message,'M2 not defined');
-          assert.equal(facts.M2.value(),300);
-        });
-    });
-
-    it('array defined fn promise not disclosed',function() {
-      return clues(facts,'M3')
-        .then(shouldErr,function(e) {
-          assert.equal(e.message,'M3 not defined');
-          assert.equal(facts.M3.value(),310);
-        });
-    });
+    t.same(MTOP,380,'is available indirectly');
+    t.same(M2.message,'M2 not defined','private fn not available directly');
+    t.same(facts.M2.value(),300,'private fn promise has the resolved value');
+    t.same(M3.message,'M3 not defined','private array - not defined');
+    t.same(facts.M3.value(),310,'private fn promise has the resolved value');
   });
 });
