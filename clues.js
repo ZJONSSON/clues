@@ -50,7 +50,7 @@
           })
           .catch(function(e) {
             if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
-              return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
+              return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref);
             else throw e;
           });
       }

@@ -1,54 +1,43 @@
- var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
 function shouldError(e) { throw 'Should error '+e;}
-function notDefined(e) { assert.deepEqual(e.message,'test not defined'); }
 
-[null,undefined,4,'a',0,Object,Array,Object].forEach(function(nothing) {
-  describe('with value '+String(nothing),function() {
-    describe(' as logic',function() {
+t.test('null logic', {autoend: true}, t => {
+  const values = [null,undefined,4,'a',0,Object,Array,Object];
 
-      it('property not defined',function() {
-        return clues(nothing,'test')
-          .then(shouldError,notDefined);
-      });
-
-      it('path not defined',function() {
-        return clues(nothing,'test.test')
-          .then(shouldError,notDefined);
-      });
-
-      it('context of empty function is empty object',function() {
-        return clues(nothing,function() {
-          if (nothing == 'a')
-            return assert.deepEqual(this,{0:'a'});
-          else
-            assert.deepEqual(this,{});
-        });
-      });
-
-      it('property fallback to global (if exists)',function() {
-        return clues(nothing,function(test) {
-          assert.equal(test,'global');
-        },{test:'global'});
-      });
+  t.test('solving for a variable of null logic', async t => {
+    await Promise.map(values, async nothing => {
+      const value = await clues(nothing,'test').then(shouldError,Object);
+      t.same(value.message,'test not defined',`${nothing}.test is undefined`);
     });
-
-    describe('as a property',function() {
-      it('should resolve correctly',function() {
-        var obj = {};
-        obj.test = nothing;
-        return clues(obj,'test')
-          .then(function(d) {
-            // functions are always resolved to objects
-            return assert.deepEqual(d, typeof nothing === 'function' ? nothing() : nothing);
-          },function(e) {
-            // we only error if the property is `undefined`
-            assert.equal(nothing,undefined);
-            assert.equal(e.message,'test not defined');
-          });
-      });
-    });
+    t.end();
   });
 
+  t.test('solving for a nested variable of null logic', async t => {
+    await Promise.map(values, async nothing => {
+      const value = await clues(nothing,'test.test').then(shouldError,Object);
+      t.same(value.message,'test not defined',`${nothing}.test.test is undefined`);
+    });
+    t.end();
+  });
+
+  t.test('solving for context of null logic', async t => {
+    await Promise.map(values, async nothing => {
+      const context = await clues(nothing,function() { return this;});
+      t.same(context, nothing == 'a' ? {0:'a'} : {},`${nothing} has a context of ${JSON.stringify(context)}`);
+    });
+    t.end();
+  });
+
+  t.test('null logic as a property', async t => {
+    await Promise.map(values.filter(d => d !== undefined), async nothing => {
+      const d = await clues({test: nothing},'test');
+      const expected = typeof nothing === 'function' ? nothing() : nothing;
+      t.same(d, expected,`test.${nothing} == ${expected}`);
+    });
+    t.end();
+  });
+  t.end();
 });

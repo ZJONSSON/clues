@@ -1,8 +1,9 @@
 // See optimization killers https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#1-tooling
+const Promise = require('bluebird');
+const execAsync = Promise.promisify(require('child_process').exec);
+const t = require('tap');
 
-var child_process = require('child_process');
-
-var statusCodes = {
+const statusCodes = {
   1: ['OK','Clues Optimized'],
   2: ['ERR','Clues Not Optimized'],
   3: ['OK','Clues Always Optimized'],
@@ -11,7 +12,7 @@ var statusCodes = {
   7: ['ERR','Clues Optimized by TurboFan']
 };
 
-var code = `
+const code = `
   var clues = require('../clues');
 
   clues();
@@ -25,11 +26,7 @@ var code = `
   process.stdout.write(String(%GetOptimizationStatus(clues)));
 `;
 
-describe('V8 compiler',function() {
-  it('optimize the clues function',function(cb) {
-    child_process.exec('echo "'+code+'" | node  --allow-natives-syntax',function(err,stdout,stderr) {
-      var status = statusCodes[stdout];
-      cb(err || stderr || (status[0] === 'ERR' && status[1]),status);
-    });
-  });
+t.test('V8 compiler', async t => {
+  const d = await execAsync('echo "'+code+'" | node  --allow-natives-syntax');
+  t.same(statusCodes[d][0],'OK');
 });

@@ -1,84 +1,63 @@
-var clues = require('../clues'),
-    Promise = clues.Promise,
-    assert = require('assert');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
 Promise.config({cancellation:true});
 
-describe('cancellation',function() {
-  var cancel = {};
+t.test('cancellation', {autoend: true}, async t => {
+  const cancel = {};
 
-  var logic = {
-    M1 : function() {
-      return new Promise(function(resolve,reject,onCancel) {
-        onCancel(function() {
-          cancel.M1 = true;
-        });
+  const Logic = {
+    M1 : () => new Promise(function(resolve,reject,onCancel) {
+      onCancel(() => cancel.M1 = true);
+      setTimeout(() => resolve(10),130);
+    }),
 
-        setTimeout(function() {
-          resolve(10);
-        },130);
-      });
-    },
+    M2 : () => new Promise(function(resolve,reject,onCancel) {
+      onCancel(() => cancel.M2 = true);
+      setTimeout(() => resolve(50),170);
+    }),
 
-    M2 : function() {
-      return new Promise(function(resolve,reject,onCancel) {
-        onCancel(function() {
-          cancel.M2 = true;
-        });
+    M3 : () => new Promise(function(resolve,reject,onCancel) {
+      onCancel(() => cancel.M3 = true);
+      setTimeout(() => resolve(10));
+    }),
+  
 
-        setTimeout(function() {
-          resolve(50);
-        },170);
-      });
-    },
+    M4 : (M1,M2,M3) => M1+M2+M3,
 
-    M3 : function() {
-      return new Promise(function(resolve,reject,onCancel) {
-        onCancel(function() {
-          cancel.M3 = true;
-        });
-
-        setTimeout(function() {
-          resolve(10);
-        },10);
-      });
-    },
-
-    M4 : function(M1,M2,M3) {
-      return M1+M2+M3;
-    },
-
-    MTOP : function(M1,M4) {
-      return M1+M4;
-    }
+    MTOP : (M1,M4) => M1+M4
   };
 
-  var facts = Object.create(logic),res;
+  const facts = Object.create(Logic);
+  let res;
 
-  it('should not return results',function() {
-    var gotResults;
+  let gotResults;
 
-    res = clues(facts,'MTOP')
-      .then(function() {
-        gotResults = true;
-      });
+  res = clues(facts,'MTOP')
+    .then(function() {
+      gotResults = true;
+    });
 
-    // Cancelling in 100ms  
-    setTimeout(res.cancel.bind(res),100);
+  // Cancelling in 100ms  
+  setTimeout(res.cancel.bind(res),100);
 
-    return Promise.delay(150)
-      .then(function() {
-        assert.equal(gotResults,undefined);
-      });
+  await Promise.delay(200);
+
+  t.test('should not return results', t => {
+    t.same(gotResults,undefined);
+    t.end();
   });
 
-  it('should trigger the cancel higher up',function() {
-    assert.equal(cancel.M1,true);
-    assert.equal(cancel.M2,true);
+  t.test('Cancellation affects dependencies', t => {
+    t.same(cancel.M1,true,'M1 cancelled');
+    t.same(cancel.M2,true,'M2 cancelled');
+    t.end();
   });
 
-  it('should not invalidate results aquired before cancellation',function() {
-    assert.equal(cancel.M3,undefined);
-    assert.equal(facts.M3.value(),10);
+  t.test('Any result resolved before cancellation should not be invalidated',t => {
+    t.same(cancel.M3,undefined,'M3 not cancelled');
+    t.same(facts.M3.value(),10,'M3 resolved to a promise with correct value');
+    t.end();
   });
 });

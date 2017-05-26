@@ -1,86 +1,59 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-describe('optional argument',function() {
+const shouldErr = () => { throw 'Should error'; };
 
-  var logic = {
+t.test('optional argument', {autoend: true}, t => {
+
+  const Logic = {
     data : function() { return Promise.delay(1000,5); },
     passthrough : function(_optional) { return _optional; },
     internalize : function(data,_optional) { return data + (_optional || 2); },
     optional_data : function(_data) { return _data; }
   };
 
-  describe('not supplied',function() {
-    return it('should return undefined',function() {
-      clues(Object.create(logic),'passthrough')
-        .then(function(d) {
-          assert.deepEqual(d,undefined);
-        });
-    });
+  const facts = () => Object.create(Logic);
+
+  t.test('not supplied', async t => {
+    t.same(await clues(facts,'passthrough'),undefined,'returns undefined');
   });
 
-  describe('with internal default',function() {
-    it('should use the internal default',function() {
-      return clues(Object.create(logic),'internalize')
-        .then(function(d) {
-          assert.equal(d,7);
-        });
-    });
+  t.test('internal default', async t => {
+    t.same(await clues(facts,'internalize'),7,'returns the default');
   });
 
-  describe('with a set fact',function() {
-    it('should return the right value',function() {
-      return clues(Object.create(logic),'passthrough',{optional:10})
-        .then(function(d) {
-          assert.equal(d,10);
-        });
-    });
+  t.test('with a set global', async t => {
+    t.same(await clues(facts,'passthrough',{optional:10}),10,'returns global');
   });
 
-  describe('with a working function',function() {
-    it('should return the function results',function() {
-      return clues(Object.create(logic),'optional_data')
-        .then(function(d) {
-          assert.equal(d,5);
-        });
-    });
+  t.test('with a working function', async t => {
+    t.same(await clues(facts,'optional_data'),5,'returns value');
   });
 
-  describe('as an error',function() {
-    var logic2 = {
+  t.test('as an error', async t => {
+    const logic2 = {
       error : function() { throw '#Error'; },
       optional : function(_error) { return _error; },
       regular : function(error) { return error; },
       showerror : function(__error) { return __error;}
     };
 
-    it('should return undefined, if optional',function() {
-      return clues(Object.create(logic2),'optional')
-        .then(function(d) {
-          assert.equal(d,undefined);
-        });
-    });
+    const facts2 = () => Object.create(logic2);
 
-    it('should raise error if non-optonal',function() {
-      return clues(Object.create(logic2),'regular')
-        .then(function() {
-          throw 'Should error';
-        },function(e) {
-          assert.equal(e.message,'#Error');
-        });
-    });
+    let d = await clues(facts2,'optional');
+    t.same(d,undefined,'_ => undefined');
 
-    it('should return the error as an object when prefix is two underscores',function() {
-      return clues(Object.create(logic2),'showerror')
-        .then(function(e) {
-          assert.equal(e.error,true);
-          assert.equal(e.message,'#Error');
-          assert.equal(e.fullref,'showerror.error');
-          assert.equal(e.ref,'error');
-        });
-    });
+    d = await clues(facts2,'regular').then(shouldErr,Object);
+    t.same(d.message,'#Error','raises error if not optional');
+
+    d = await clues(facts2,'showerror');
+    t.same(d.error,true);
+    t.same(d.message,'#Error');
+    t.same(d.fullref,'showerror.error');
+    t.same(d.ref,'error');
+
   });
-});
 
+});
 

@@ -1,9 +1,8 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-
-var logic = {
+const Logic = {
   a : 41,
   test : Promise.resolve(function(a) {
     return Promise.resolve(Promise.resolve(function() {
@@ -15,11 +14,6 @@ var logic = {
 
 };
 
-describe('When promise resolve to a function',function() {
-  it('is used when resolved',function() {
-    return clues(logic,'test')
-      .then(function(d) {
-        assert.equal(d,42);
-      });
-  });
+t.test('when promise resolve to a function', async t => {
+  t.same(await clues(Logic,'test'),42,'function is evaluated');
 });
