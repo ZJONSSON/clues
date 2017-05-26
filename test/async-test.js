@@ -1,17 +1,15 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-var Logic = {
+const facts = {
   answer : async function() {
-    var value = await Promise.delay(100).then(function() { return 41;});
+    const value = await Promise.delay(100).then(() => 41);
     return value+1;
   }
-}
+};
 
-describe('Async function',function() {
-  it('should resolve',async function() {
-    var answer = await clues(Logic,'answer');
-    assert.equal(answer,42);
-  })
+t.test('Async function', async t => {
+  const answer = await clues(facts,'answer');
+  t.same(answer,42,'resolves to a value');
 });

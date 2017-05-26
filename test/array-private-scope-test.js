@@ -1,88 +1,57 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    crypto = require('crypto');
+const clues = require('../clues');
+const crypto = require('crypto');
+const t = require('tap');
 
 function shouldError() { throw 'Should not run';}
 
-describe('Array fn private scope',function() {
+t.test('Array fn private scope', {autoend:true}, t => {
 
-  describe('With only array logic',function() {
-
+  t.test('With only array logic', async t => {
     function privateObj() {
       return {
-        answer : function(forty,two) {
-          return forty+two;
-        },
+        answer : (forty,two) => forty + two,
         forty : 40,
         two : 2,
-        err : function() {
+        err : () => {
           throw 'This is an error';
         }
       };
     }
 
-    var pub = {
+    const pub = {
       M1 : 100,
       M2 : 200
     };
 
-    it('works without array arguments',function() {
-      var obj = privateObj();
-      return clues(null,[obj,function(answer) {
-        assert.equal(answer,42);
-      }]);
-    });
+    const obj = privateObj();  
 
-    it('works with array arguments',function() {
-      var obj = privateObj();
-      return clues({},[obj,'answer',function(d) {
-        assert.equal(d,42);
-      }]);
-    });
+    t.same(await clues(null,[obj,'answer',Number]),42,'works without array arguments');
+    t.same(await clues(null,[privateObj,'answer',Number]),42,'works with private scope');
+    
 
-    it('works with private scope defined from function',function() {
-      return clues({},[privateObj,function(answer) {
-        assert.equal(answer,42);
-      }]);
-    });
+    let d1 = await clues({},[privateObj,'err',String])
+      .then(shouldError,e => e);
 
-    it('handles errors correctly',function() {
-      return clues({},[privateObj,'err',String])
-        .then(function() { console.log(arguments);throw 'Should Error';},function(e) {
-          assert.equal(e.ref,'err');
-          assert.equal(e.fullref,'err');
-          assert.equal(e.message,'This is an error');
-        });
-    });
+    t.same(d1.message,'This is an error','handles errors correctly');
 
-    it('works recursively',function() {
-      return clues({},[Object.create(pub),[['M1',Number],['M2',Number],[privateObj(),'forty',Number],Array],function(d) {
-        assert.deepEqual(d,[100,200,40]);
-      }]);
-    });
+    let d2 = await clues(null,[Object.create(pub),[['M1',Number],['M2',Number],[privateObj(),'forty',Number],Array],Object]);
+    t.same(d2,[100,200,40],'works recursively');
   });
 
-  describe('public/private structure',function() {
+  t.test('public/private structure', async t => {
 
-    var PrivateLogic  = {
+    const PrivateLogic  = {
       secret : 'Hidden secret',
 
-      hash : function(secret,userid) {
-        return crypto.createHash('sha1')
+      hash : (secret,userid) => crypto.createHash('sha1')
           .update(secret)
           .update(userid)
-          .digest('hex');
-      },
+          .digest('hex'),
 
-      public : function(hash,_userid) {
-        return {
-          hash : hash,
-          userid : _userid,
-        };
-      }
+      public : (hash,_userid) => ({hash, userid : _userid})
     };
 
-    var Logic = {
+    const Logic = {
       info : function(_userid) {
         return [
           Object.create(PrivateLogic,{userid:{value:_userid}}),
@@ -92,24 +61,25 @@ describe('Array fn private scope',function() {
       }
     };
 
-    it('provides custom access to private segments',function() {
-      var obj = Object.create(Logic,{userid: {value:'admin'}});
+    t.test('custom access to private segments',t => {
+      const obj = Object.create(Logic,{userid: {value:'admin'}});
       return clues(obj,function(info) {
-        assert.equal(info.userid,'admin');
-        assert.equal(info.hash,'b21b8fd516dbb99584d651f040d970dba2245b2a');
-        assert.equal(obj.secret,undefined);
-        assert.equal(info.secret,undefined);
+        t.same(info.userid,'admin','username matches');
+        t.same(info.hash,'b21b8fd516dbb99584d651f040d970dba2245b2a','hash matches');
+        t.same(obj.secret,undefined,'no obj.secret');
+        t.same(info.secret,undefined,'no info.secret');
       });
     });
 
-    it('handles errors correctly',function() {
-      var obj = Object.create(Logic);
+    t.test('handles errors correctly',t => {
+      const obj = Object.create(Logic);
       return clues(obj,'info')
         .then(shouldError,function(e) {
-          assert.equal(e.ref,'userid');
-          assert.equal(e.message,'userid not defined');
-          assert.equal(e.caller,'hash');
-          assert.equal(e.fullref,'info.public.hash.userid');
+          t.same(e.error,true,'errors');
+          t.same(e.ref,'userid','userid as ref');
+          t.same(e.message,'userid not defined','right error message');
+          t.same(e.caller,'hash','caller is hash');
+          t.same(e.fullref,'info.public.hash.userid','fullref');
         });
     });
   });

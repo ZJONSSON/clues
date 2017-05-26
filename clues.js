@@ -50,7 +50,7 @@
           })
           .catch(function(e) {
             if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
-              return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,caller,(fullref ? fullref+'.' : '')+ref);
+              return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref);
             else throw e;
           });
       }
@@ -105,12 +105,14 @@
         return clues.Promise.resolve(fn);
     }
 
-    // Shortcuts to define empty objects with $property or $external
-    if (fn.name == '$property') return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
-    if (fn.name == '$external') return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
+    args = (args || matchArgs(fn));
 
-    args = (args || matchArgs(fn))
-      .map(function(arg) {
+    // Shortcuts to define empty objects with $property or $external
+    if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
+    if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
+
+    
+    args = args.map(function(arg) {
         var optional,showError,res;
         if (optional = (arg[0] === '_')) arg = arg.slice(1);
         if (showError = (arg[0] === '_')) arg = arg.slice(1);

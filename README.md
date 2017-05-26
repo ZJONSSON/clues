@@ -67,7 +67,7 @@ There are only a few restrictions and conventions you must into account when def
 
 * Any property name starting with a [$](#-at-your-service) bypasses the main function cruncher (great for services)
 * [`$property`](#property---lazily-create-children-by-missing-reference) and [`$external`](#external-property-for-undefined-paths) are special handlers for missing properties  (if they are functions)
-* Any function named in-line as `$property` or `$external` will act as shorthands
+* Any function named in-line as `$property` or `$external` (or as only argument name of a function) will act as shorthands
 * `$global` will always return the full global object provided, in any context.
 * `$caller` and `$fullref` are reserved to provide access to the current state of the clues solver when it hits a function for the first time.
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
@@ -378,6 +378,13 @@ clues(fib,['12','14','25','1000',Array])
   .then(console.log);
 ```
 
+Another way to create this shortcut is to have a function where only argument name is `$property`
+
+```js
+var fib = $property => ($property <= 1) ? +$property : [''+($property-1),''+($property-2), (a,b) => a+b];
+```
+
+
 ### $external property for undefined paths
 If an undefined property can not locate a `$property` function it will look for an `$external` function.   The purpose of the `$external` function is similar except that the argument passed to the function will be the full remaining reference (in dot notation), not just the next reference in the chain.
 
@@ -416,11 +423,23 @@ Naming a function as `$external` (i.e. setting `Function.name`) acts as a shorth
 ...
    externalApi : function(userid) {
      return function $external(ref) {
-        ref = ref.replace(/\./g,'/');
-        ....
-     }
-   }
+      return request.getAsync({
+        url : 'http://api.vendor.com/api/'+ref.replace(/\./g,'/'),
+        json : {user_id : userid}
+      }); 
+ ....
 ```
+
+A function with a sole argument of `$external` will behave the same:
+
+```js
+...
+   externalApi : userid => $external => request.getAsync({
+    url: 'http://api.vendor.com/api/'+$external.replace(/\./g,'/').
+    json: {user_id: userid}
+  });
+```
+
 
 ### function that returns a function that returns a...
 If the resolved value of any function is itself a function, that returned function will also be resolved (within the same scope).  This allows for very powerful 'gateways' that constrains the tree traversal only to segments that are relevant for a particular solutions.
@@ -428,13 +447,7 @@ If the resolved value of any function is itself a function, that returned functi
 Logic = {
   tree_a : {....},
   tree_b : {....},
-  next_step: function(step) {
-    if (step === 'a')
-      return ['tree_a',Object]
-    else
-      return ['tree_b',Object];
-    }
-  }
+  next_step: step => (step === 'a') ? ['tree_a',Object] : ['tree_b',Object]
 }
 
 clues(Logic,'next_step',{step:'a'})

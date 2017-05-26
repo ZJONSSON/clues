@@ -1,9 +1,11 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-describe('In recursive logic',function() {
-  var logic = {
+const shouldErr = () => { throw 'Should Error'; };
+
+t.test('In recursive logic',{autoend: true}, t => {
+  const Logic = {
     simple : {
       value : 2,
     },
@@ -20,15 +22,15 @@ describe('In recursive logic',function() {
               d : {
                 id: val+100,
                 e : {
-                    f :12,
-                    g : function(f) {
-                      return 2*f;
-                    },
-                    h : function() {
-                      return function(f) {
-                        return f+2;
-                      };
-                    }
+                  f :12,
+                  g : function(f) {
+                    return 2*f;
+                  },
+                  h : function() {
+                    return function(f) {
+                      return f+2;
+                    };
+                  }
                 }
               }
             }
@@ -38,98 +40,62 @@ describe('In recursive logic',function() {
     }]
   };
 
-  var facts = Object.create(logic);
+  const facts = Object.create(Logic);
 
-  it('simple nesting works',function() {
-    return clues(facts,'simple.value')
-      .then(function(d) {
-        assert.equal(d,2);
-      });
+  t.test('simple nesting',async t => {
+    t.same( await clues(facts,'simple.value'),2,'works');
+  });
+    
+  t.test('medium nesting works', async t => {
+    t.same( await  clues(facts,'medium.bucket.value'),10,'works');
   });
 
-  it('medium nesting works',function() {
-    return clues(facts,'medium.bucket.value')
-    .then(function(value) {
-      assert.equal(value,10);
-    });
+  t.test('ᐅ works as an alias for dot', async t => {
+    t.same( await clues(facts,'mediumᐅbucketᐅvalue'), 10, 'works');
+  });
+  
+  t.test('complex nesting', async t => {
+    t.same( await clues(facts,'hard.a.b.c.d.id'),102,'works');
   });
 
-  it('ᐅ works as an alias for dot',function() {
-    return clues(facts,'mediumᐅbucketᐅvalue')
-      .then(function(value) {
-        assert.equal(value,10);
-      });
+  t.test('ᐅ as an alias for dot',async t => {
+    t.same( await clues(facts,'hardᐅaᐅbᐅcᐅdᐅid'),102,'works');
   });
 
-  describe('complex nesting',function() {
-    it('works', function() {
-      return clues(facts,'hard.a.b.c.d.id').then(function(value) {
-        assert.equal(value,102);
+  t.test('on returned functions',async t => {
+    t.same( await clues(facts,'hard.a.b.c.d.e.h'),14,'works');
+  });
+
+  t.test('works when fact repeats twice', async t => {
+    const d = await clues(facts,['hard.a.b.c.d.e','hard.a.b.c.d.e.f','hard.a.b.c.d.e.g',Array]);
+    t.same(d[1],12,'works');
+    t.same(d[2],24,'works');
+  });
+
+  t.test('supports optional', async t => {
+    t.same( await clues(facts,['_hard.a.b.c.d.id',Number]),102,'works');
+  });
+
+  t.test('path traversed manually', async t => {
+    const d = await clues(facts,hard => {
+      return clues(hard.a.b,c => {
+        return clues(c.d,'id');
       });
     });
+    t.same(d,102,'works');
+  });
 
-    it('ᐅ works as an alias for dot',function() {
-      return clues(facts,'hardᐅaᐅbᐅcᐅdᐅid')
-        .then(function(value) {
-          assert.equal(value,102);
-        });
-    });
+  t.test('bad path returns an error', async t => {
+    const e = await clues(facts,'hard.a.b.c.d.i.oo.oo').then(shouldErr,Object);
+    t.same(e.message,'i not defined','errors');
+    t.same(e.ref,'i','ref ok');
+    t.same(e.fullref,'hard.a.b.c.d.i','fullref ok');
+      
+  });
 
-    it('works on returned functions',function() {
-      return clues(facts,'hard.a.b.c.d.e.h')
-        .then(function(h) {
-          assert.equal(h,14);
-        });
-    });
-
-    it('works when clue repeats twice',function() {
-      return clues(facts,['hard.a.b.c.d.e','hard.a.b.c.d.e.f','hard.a.b.c.d.e.g',function(a,b,c) {
-        assert.equal(b,12);
-        assert.equal(c,24);
-      }]);
-    });
-
-    it('supports optional',function() {
-      return clues(facts,['_hard.a.b.c.d.id',function(value) {
-        assert.equal(value,102);
-      }]);
-    });
-
-    it('can be resolved manually',function() {
-      return clues(facts,function(hard) {
-        return clues(hard.a.b,function(c) {
-          return clues(c.d,function(id) {
-            assert.equal(id,102);
-          });
-        });
-      });
-    });
-
-    it('bad path returns an error',function() {
-      return clues(facts,'hard.a.b.c.d.i.oo.oo')
-        .then(function() {
-          throw 'We should not arrive here';
-        },function(e) {
-          assert.equal(e.ref, 'i');
-          assert.equal(e.fullref, 'hard.a.b.c.d.i');
-        });
-    });
-
-    it('optional bad path returns undefined',function() {
-      return clues(facts,['_hard.a.b.e','simple.value',function(a,b) {
-        assert.equal(a,undefined);
-        assert.equal(b,2);
-      }]);
-    });
-
-    it('optional bad path returns undefined',function() {
-      return clues(facts,'hard.a.b.e')
-        .then(function() {
-          throw 'This function should return an error';
-        },function(e) {
-          assert.equal(e.message,'e not defined');
-        });
-    });
-
+  t.test('optional bad path returns undefined',async t => {
+    const d = await clues(facts,['_hard.a.b.e','simple.value',Array]);
+    t.same(d[0],undefined,'bad path is undefined');
+    t.same(d[1],2,'good path returns value');
   });
 });

@@ -1,29 +1,18 @@
-var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const t = require('tap');
 
-function logic($global) {
+function facts($global) {
   $global.$constant = 380;
   return { a : { b : function($constant) { return $constant; } } };
 }
 
-describe('When logic is a function',function() {
-  it('it is evaluated before solving',function() {
-    return clues(logic,'a.b')
-      .then(function(d) {
-        assert.equal(d,380);
-      });
-  });
+function wrapped() {
+  return function($global) {
+    return facts;
+  };
+}
 
-  it('even nested functions are evaluated before solving',function() {
-    function wrapped() {
-      return function($global) {
-        return logic;
-      };
-    }
-
-    return clues(wrapped,'a.b')
-      .then(function(d) {
-        assert.equal(d,380);
-      });
-  });
+t.test('when logic is a function', async t => {
+  t.same( await clues(facts,'a.b'),380,'direct call is evaluated before solving');
+  t.same( await clues(wrapped,'a.b'),380,'nested functions evaluated');
 });

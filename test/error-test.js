@@ -1,160 +1,139 @@
-var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const t = require('tap');
 
 function shouldErr() { throw 'Should throw an error'; }
 
-describe('error',function() {
-  var c = {a: function(b) { return b;}};
+t.test('error', {autoend: true},t => {
+  const c = {a: function(b) { return b;}};
 
-  describe('when argument can´t be found',function() {
-    it('should throw an error',function() {
-      return clues({},'SOMETHING')
-        .then(shouldErr,function(e) {
-          assert.equal(e.ref,'SOMETHING');
-          assert.equal(e.message, 'SOMETHING not defined');
-        });
+  t.test('when argument is not found', async t => {
+    t.test('direct call',async t => {
+      const e = await clues({},'SOMETHING').then(shouldErr,Object);
+      //t.equal(e.error,true,'shows errors');
+      t.same(e.message,'SOMETHING not defined','message: not defined');
+      t.same(e.ref,'SOMETHING','ref: missing variable');
     });
 
-    it('should show caller if a named logic function',function() {
-      return clues(c,'a')
-        .then(shouldErr,function(e) {
-          assert.equal(e.ref,'b');
-          assert.equal(e.message,'b not defined');
-          assert.equal(e.caller,'a');
-        });
+    t.test('caller is logic function', async t => {
+      const e = await clues(c,'a').catch(Object);
+      t.same(e.error,true,'errors');
+      t.same(e.ref,'b','ref is correct');
+      t.same(e.message,'b not defined','message is correct');
+      t.same(e.caller,'a','caller is correct');
     });
   });
 
-  describe('thrown',function() {
-    var logic = {
-      ERR : function() { throw 'Could not process'; },
-      DEP : function(ERR) { return 'Where is the error'; }
+  const Logic = {
+    ERR : function() { throw 'Could not process'; },
+    DEP : function(ERR) { return 'Where is the error'; }
+  };
+
+  t.test('throw', {autoend:true}, t => {
+
+    t.test('directly', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'ERR').catch(Object);
+      const reason = facts.ERR.reason();
+      t.equal(e.message,'Could not process','message ok');
+      t.same(e.ref,'ERR','ref ok');
+      t.same(reason.message,'Could not process','facts register message');
+    });
+
+    t.test('indirectly - dependent fn', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'DEP').catch(Object);
+      t.equal(e.message,'Could not process','message ok');
+      t.same(e.ref,'ERR','ref ok');
+      t.same(e.caller,'DEP','Should reference the first caller');
+    });
+  });
+
+  t.test('function named $noThrow', {autoend: true}, t => {
+    const facts = Object.create(Logic);
+
+    t.test('thrown rejection', async t => {
+      const e = await clues(facts,function $noThrow(DEP) { return DEP;});
+      t.same(e.error,true,'Returns an object with the error');
+      t.same(e.ref,'ERR','ref ok');
+      t.equal(e.message,'Could not process','message ok');
+    });
+
+    t.test('error within subsequent fn', async t => {
+      const fn = function $noThrow() {
+        return ['DEP',Object];
+      };
+      const e = await clues(facts,fn);
+      t.same(e.error,true,'Returns an object with the error');
+      t.same(e.ref,'ERR','ref ok');
+      t.equal(e.message,'Could not process','message ok');
+    });
+  });
+
+  t.test('$logError', {autoend: true}, t => {
+
+    const Global = {
+      $logError : function(e,f) {
+        this.error = e;
+        this.fullref = f;
+      }
     };
-    var facts = Object.create(logic);
 
-    describe('directly',function() {
-      
-      it('should show up as first argument (err)',function() {
-        return clues(facts,'ERR')
-          .then(shouldErr,function(e) {
-            assert.equal(e.ref,'ERR');
-            assert.equal(e.message,'Could not process');
-          });
-      });
+    t.test('error with a stack', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        stack_error: function() { throw new Error('error');}
+      };
 
-      it ('should update the facts',function() {
-          var e = facts.ERR.reason();
-          assert.equal(e.ref,'ERR');
-          assert.equal(e.message,'Could not process'); 
-      });
+      await clues(facts,'stack_error',$global).then(shouldErr,Object);
+      t.same($global.error.message,'error');
+      t.ok($global.error.stack,'contains a stack');
+      t.same($global.error.fullref,'stack_error','fullref ok');
     });
 
-    describe('indirectly',function() {
-      
-      it('should throw same error for dependent logic',function() {
-        return clues(facts,'DEP')
-          .then(shouldErr,function(e) {
-            assert.equal(e.ref,'ERR');
-            assert.equal(e.message,'Could not process');
-          });
-      });
+    t.test('promise rejected with a stack', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        stack_error_promise: ()  => clues.Promise.reject(new Error('error'))
+      };
 
-      it('should contain reference to the first caller',function() {
-        facts = Object.create(logic);
-        return clues(facts,'DEP')
-          .catch(function() {
-            return clues(facts,'ERR');
-          })
-          .then(shouldErr,function(e) {
-            assert.equal(e.caller,'DEP');
-          });
-      });
+      await clues(facts,'stack_error_promise',$global).then(shouldErr,Object);
+      t.same($global.error.message,'error','error passed to $logError');
+      t.ok($global.error.stack,'contains a stack');
+      t.same($global.error.fullref,'stack_error_promise','fullref ok');
     });
 
-    describe('function named $noThrow',function() {
-      it('should return the error obj',function() {
-        return clues(facts,function $noThrow(DEP) {
-          return DEP;
-        })
-        .then(function(e) {
-          assert.equal(e.ref,'ERR');
-          assert.equal(e.message,'Could not process');
-        },function() {
-          throw 'Should return the error object';
-        });
-      });
-      it('should return the error obj for subsequent fn',function() {
-        return clues(facts,function $noThrow() {
-          return ['DEP',Object];
-        })
-        .then(function(e) {
-          assert.equal(e.ref,'ERR');
-          assert.equal(e.message,'Could not process');
-        },function() {
-          throw 'Should return the error object';
-        });
-      });
+    t.test('error without a stack (rejection)', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        rejection: function() { throw 'error';}
+      };
+      await clues(facts,'rejection',$global).then(shouldErr,Object);
+      t.same($global.error,undefined,'should not $logError');
     });
 
-    describe('$logError',function() {
-      var logic = {
-          stack_error: function() { throw new Error('error');},
-          stack_error_promise: function() { return clues.Promise.reject(new Error('error'));},
-          rejection: function() { throw 'error';},
-          rejection_promise: function() { return Promise.reject('error');},
-          optional: function(_stack_error,_rejection) {
-            return 'OK';
-          }
-        };
+    t.test('Promise rejection without a stack', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        rejection_promise: function() { return Promise.reject('error');}
+      };
 
-      it('should log an error with stack',function() {
-        var facts = Object.create(logic),error,fullref;          
-        return clues(facts,'stack_error',{$logError:function(e,f) {error = e;fullref = f;}})
-          .catch(Object)
-          .then(function() {
-            assert.equal(error && error.message,'error');
-            assert.equal(fullref,'stack_error');
-          });
-      });
-
-      it('should log a rejected promise with stack',function() {
-        var facts = Object.create(logic),error,fullref;          
-        return clues(facts,'stack_error_promise',{$logError:function(e,f) {error = e; fullref = f;}})
-          .catch(Object)
-          .then(function() {
-            assert.equal(error && error.message,'error');
-            assert.equal(fullref,'stack_error_promise');
-          });
-      });
-
-
-      it('should not log an error with no stack',function() {
-        var facts = Object.create(logic),error;          
-        return clues(facts,'rejection',{$logError:function(e) {error = e;}})
-          .catch(Object)
-          .then(function() {
-            assert.equal(error,undefined);
-          });
-      });
-
-      it('should not log a rejection with no stack',function() {
-        var facts = Object.create(logic),error;          
-        return clues(facts,'rejection',{$logError:function(e) {error = e;}})
-          .catch(Object)
-          .then(function() {
-            assert.equal(error,undefined);
-          });
-      });
-      
-      it('should log an error even if only used optionally',function() {
-        var facts = Object.create(logic),error;          
-        return clues(facts,'optional',{$logError:function(e) {error = e;}})
-          .catch(Object)
-          .then(function() {
-            assert.equal(error.message,'error');
-          });
-      });
+      await clues(facts,'rejection_promise',$global).then(shouldErr,Object);
+      t.same($global.error,undefined,'should not $logError');
     });
+
+    t.test('stack error in an optional dependency', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        stack_error: () => { throw new Error('error');},
+        rejection: () => { throw 'error';},
+        optional: (_stack_error,_rejection) => 'OK'
+      };
+
+      await clues(facts,'optional',$global);
+      t.same($global.error.message,'error','error passed to $logError');
+      t.ok($global.error.stack,'contains a stack');
+      t.same($global.error.fullref,'optional.stack_error','fullref ok');
+    });
+
   });
 });
-

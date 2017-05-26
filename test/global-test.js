@@ -1,8 +1,10 @@
-var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const t = require('tap');
 
-describe('Global variable',function() {
-  var logic = {
+const shouldErr = () => { throw 'Should error'; };
+
+t.test('Global variable', {autoend: true},  t => {
+  const Logic = {
     a: 123,
     b: {
       count : 0,
@@ -36,9 +38,9 @@ describe('Global variable',function() {
     }
   };
 
-  var facts = Object.create(logic);
+  const facts = Object.create(Logic);
 
-  var global = {
+  const global = {
     $input : {
       test: 10,
       test2: function(test) {
@@ -47,34 +49,21 @@ describe('Global variable',function() {
     }
   };
 
-  it('should be applied where referenced',function() {
-    return clues(facts,'b.c',global)
-      .then(function(d) {
-        assert.equal(d,133);
-        assert.equal(facts.b.count,1);
-      });
+  t.test('when referenced as a dependency of a function', async t => {
+    t.same(await clues(facts,'b.c',global), 133, 'uses the global variable');
+    t.same(facts.b.count,1,'fn called once');
   });
 
-  it('can not be applied directly',function() {
-    return clues(facts,'$input',global)
-      .then(function() {
-        throw 'Should Error';
-      },function(e) {
-        assert.equal(e.message,'$input not defined');
-      });
+  t.test('when referenced directly', async t => {
+    const e = await clues(facts,'$input',global).then(shouldErr,Object);
+    t.same(e.message,'$input not defined','should error');
   });
 
-  it('can not be applied as part of dot notation',function() {
-    return clues(facts,'d.c',global)
-      .then(function(d) {
-        assert.equal(d,29);
-      });
+  t.test('inside a nested structure', async t => {
+    t.same(await clues(facts,'d.c',global),29,'uses the global variable');
   });
 
-  it('can be used as object $global',function() {
-    return clues(facts,'e.f.g',global)
-      .then(function(d) {
-        assert.equal(d,4);
-      });
+  t.test('$global object as dependency', async t => {
+    t.same(await clues(facts,'e.f.g',global), 4, 'uses the $global object');
   });
 });

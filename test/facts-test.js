@@ -1,36 +1,31 @@
-var clues = require('../clues'),
-    assert = require('assert'),
-    Promise = require('bluebird');
+const clues = require('../clues');
+const Promise = require('bluebird');
+const t = require('tap');
 
-describe('facts',function() {
-  var logic = {
+t.test('facts',{autoend: true}, t => {
+  const Logic = {
     response : function() { return Promise.delay(500,42);},
     other : function() { return 5; }
   };
 
-  var facts = Object.create(logic);
+  const facts = Object.create(Logic);
 
-  it('should return the solved logic when determined',function() {
-    var start = new Date();
-    return clues(facts,'response')
-      .then(function(d) {
-        var wait = (new Date()) - start;
-        assert.equal(wait >= 500,true,'wait was '+wait);
-        assert.equal(d,42);
-      });
+  t.test('called first time', async t => {
+    const start = new Date();
+    t.same(await clues(facts,'response'),42,'resolves function when called');
+    const wait = new Date() - start;
+    t.ok(  wait >= 500,true, `wait was ${wait}`);
   });
 
-  it('should return value immediately when solved for again',function() {
-    var start = new Date();
-    return clues(facts,'response')
-      .then(function(d) {
-        var wait = (new Date()) - start;
-        assert.equal(wait <= 20,true,'wait was '+wait);
-        assert.equal(d,42);
-      });
+  t.test('called second time', async t => {
+    const start = new Date();
+    t.same(await clues(facts,'response'),42,'resolves function when called');
+    const wait = new Date() - start;
+    t.ok(  wait <= 100,true, 'should return immediately');
   });
 
-  it('should not be solved for unrequested logic',function() {
-    assert(typeof facts.other === 'function');
+  t.test('unrequested logic function', {autoend: true}, t => {
+    t.same(typeof facts.other,'function','should not be resolved');
   });
+
 });

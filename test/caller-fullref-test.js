@@ -1,86 +1,41 @@
-var clues = require('../clues'),
-    assert = require('assert');
+const clues = require('../clues');
+const t = require('tap');
 
- function obj() {
-  return {
-    a : {
-      b : {
-        caller : function($caller) { return $caller; },
-        fullref : function($fullref) { return $fullref; }
-      }
-    },
-    call : ['a.b.caller',String],
-    fullref : ['a.b.fullref',String]
-  };
-}
-
-describe('$caller',function() {
-  describe('with fn called directly',function() {
-    it('is null without provided caller',function() {
-      return clues(obj,'a.b.caller')
-        .then(function(caller) {
-          assert.equal(caller,undefined);
-        });
-    });
-
-    it('shows provided caller',function() {
-      return clues(obj,'a.b.caller',{},'__user__')
-        .then(function(caller) {
-          assert.equal(caller,'__user__');
-        });
-    });
-  });
-
-  describe('with fn called indirectly',function() {
-    it('show last fn without provided caller',function() {
-      return clues(obj,'call')
-        .then(function(caller)  {
-          assert.equal(caller,'call');
-        });
-    });
-
-    it('shows last fn even with provded caller',function() {
-      return clues(obj,'call',{},'__user__')
-        .then(function(caller)  {
-          assert.equal(caller,'call');
-        });
-    });
-  });
-
-  describe('with $caller override in object',function() {
-    it('returns override',function() {
-      var o = obj();
-      o.a.b.$caller = 'CUSTOM_CALLER';
-      return clues(o,'call',{},'__user__')
-        .then(function(caller) {
-          assert.equal(caller,'CUSTOM_CALLER');
-        });
-    });
-  });
-
+const facts = () => ({
+  a : {
+    b : {
+      caller : function($caller) { return $caller; },
+      fullref : function($fullref) { return $fullref; }
+    }
+  },
+  call : ['a.b.caller',String],
+  fullref : ['a.b.fullref',String]
 });
 
-describe('$fullref',function() {
-  it('direct call shows fullref',function() {
-    return clues(obj,'a.b.fullref')
-      .then(function(fullref) {
-        assert.equal(fullref,'a.b.fullref');
-      });
-  });
 
-  it('indirect call shows fullref',function() {
-    return clues(obj,'fullref')
-      .then(function(fullref) {
-        assert.equal(fullref,'fullref.a.b.fullref');
-      });
+t.test('$caller', {autoend:true}, t => {
+  t.test('with fn called directly', async t => {
+    t.same(await clues(facts,'a.b.caller'),undefined,'is null without caller');
+    t.same(await clues(facts,'a.b.caller',{},'__user__'),'__user__','shows with caller');
   });
+});
 
-  it('with $fullref override in object returns override',function() {
-    var o = obj();
-    o.a.b.$fullref = 'CUSTOM_FULLREF';
-    return clues(o,'fullref',{})
-      .then(function(fullref) {
-        assert.equal(fullref,'CUSTOM_FULLREF');
-      });
-  });
+t.test('with fn called indirectly', async t => {
+  t.same(await clues(facts,'call'),'call','shows last fn without provided caller');
+  t.same(await clues(facts,'call',{},'__user__'),'call','shows last fn even with caller');
+});
+
+t.test('with $caller override in factsect', async t => {
+  const o = facts();
+  o.a.b.$caller = 'CUSTOM_CALLER';
+  t.same(await clues(o,'call',{},'__user__'),'CUSTOM_CALLER','returns override');
+});
+
+t.test('$fullref', async t => {
+  t.same(await clues(facts,'a.b.fullref'),'a.b.fullref','direct call shows fullref');
+  t.same(await clues(facts,'fullref'),'fullref.a.b.fullref','indirect call shows fullref');
+
+  const o = facts();
+  o.a.b.$fullref = 'CUSTOM_FULLREF';
+  t.same(await clues(o,'fullref',{}),'CUSTOM_FULLREF','$fullref override returns override');
 });
