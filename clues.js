@@ -152,7 +152,7 @@
       })
       .finally(function() {
         if (typeof $global.$duration === 'function')
-          $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait]);
+          $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
       })
       .then(function(d) {
         return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
