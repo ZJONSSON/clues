@@ -102,6 +102,9 @@
           // Pass results through clues again if its a function or an array (could be array function)
           return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? clues(logic,d,$global,caller,fullref) : d;
         });
+      else if (typeof fn === 'function' && fn.name === '$prep') {
+        return clues(logic,fn,$global,caller,fullref).then(service => logic[ref] = service);
+      }
       else 
         return clues.Promise.resolve(fn);
     }
@@ -111,7 +114,7 @@
     // Shortcuts to define empty objects with $property or $external
     if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
     if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
-
+    if (fn.name === '$service') return fn;
     
     args = args.map(function(arg) {
         var optional,showError,res;
