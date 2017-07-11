@@ -95,16 +95,13 @@
      return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
+    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && fn.name !== '$prep')) {
       // If the value is a promise we wait for it to resolve to inspect the result
       if (fn && typeof fn.then === 'function')
         return fn.then(function(d) {
           // Pass results through clues again if its a function or an array (could be array function)
           return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? clues(logic,d,$global,caller,fullref) : d;
         });
-      else if (typeof fn === 'function' && fn.name === '$prep') {
-        return clues(logic,fn,$global,caller,fullref).then(service => logic[ref] = service);
-      }
       else 
         return clues.Promise.resolve(fn);
     }
