@@ -317,10 +317,10 @@ If you would like to have a service method that is partially fed by the rest of 
 var Cabinet = {
   
   something: () => 5,
-  else: () => 6,
+  complicated: () => 6,
 
-  $adder: function $prep(something, else) {
-    let work = something + else;
+  $adder: function $prep(something, complicated) {
+    let work = something + complicated;
     return function $service(number) {
       return work * number;
     }
