@@ -309,7 +309,24 @@ var obj = Object.create(Cabinet);
 clues(obj,['drawer.open','drawer.close',Object],Global);
 ```
 
-It is worth noting that this functionality only applies to functions.  If an object has a $ prefix, then any functions inside that object will be crunched by `clues` as usual.
+It is worth noting that this functionality only applies to functions.  If an object has a $ prefix, then any functions inside that object will be crunched by `clues` as usual.  
+
+If you would like to have a service method that is partially fed by the rest of the `facts`, you can name your function `$prep`.  If you want to make a `$prep` for your service, you must eventually return a `$service` method.  For example:
+
+```js
+var Cabinet = {
+  
+  something: () => 5,
+  complicated: () => 6,
+
+  $adder: function $prep(something, complicated) {
+    let work = something + complicated;
+    return function $service(number) {
+      return work * number;
+    }
+  }
+};
+```
 
 
 ### $property - lazily create children by missing reference

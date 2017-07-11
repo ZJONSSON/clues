@@ -95,7 +95,7 @@
      return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || (ref && ref[0] === '$')) {
+    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && fn.name !== '$prep')) {
       // If the value is a promise we wait for it to resolve to inspect the result
       if (fn && typeof fn.then === 'function')
         return fn.then(function(d) {
@@ -111,7 +111,7 @@
     // Shortcuts to define empty objects with $property or $external
     if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
     if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
-
+    if (fn.name === '$service') return fn;
     
     args = args.map(function(arg) {
         var optional,showError,res;
