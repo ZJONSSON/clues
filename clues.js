@@ -16,7 +16,7 @@
       var match = fn.prototype && fn.prototype.constructor.toString() || fn.toString();
       match = match.replace(/^\s*async/,'');
       match = reArgs.exec(match) || reEs6.exec(match) || reEs6Class.exec(match);
-      fn.__args__ = match[1].replace(/\s/g,'')
+      fn.__args__ = !match ? [] : match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {
           return d.length;
@@ -145,6 +145,15 @@
           return fn.apply(logic || {}, args);
         })
         .catch(function(e) {
+          // If fn is a class we solve for the constructor variables (if defined) and return a new instance
+          if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
+            args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
+            args = args ? args.split(',') : [];
+            return [logic].concat(args).concat(function() {
+              args = [null].concat(Array.prototype.slice.call(arguments));
+              return new (Function.prototype.bind.apply(fn,args));
+            });
+          }
           if (e && e.stack && typeof $global.$logError === 'function')
             $global.$logError(e, fullref);
           throw e;
