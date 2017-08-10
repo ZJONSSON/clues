@@ -26,15 +26,46 @@
   }
 
   function clues(logic,fn,$global,caller,fullref) {
+    try {
+      return clues.Promise.resolve(_rawClues(logic,fn,$global,caller,fullref));
+    }
+    catch (e) {
+      return clues.Promise.reject(e);
+    }
+  }
+
+  function promiseHelper(val, success, error, _finally) {
+    if (!val) {
+      let result = val, rethrow = null;
+      if (error) {
+        try { result = error(val); } catch (e) { rethrow = e; }
+      }
+      if (_finally) _finally(val);
+      if (rethrow) throw rethrow;
+      return result;
+    }
+    if (val.then && typeof val.then === 'function') {
+      // todo: inspect to see if already done and then don't use .then
+      let result = val;
+      if (success) result = result.then(success);
+      if (error) result = result.catch(error);
+      if (_finally) result = result.finally(_finally);
+      return result;
+    }
+
+    let result = success(val);
+    if (_finally) _finally(val);
+    return result;
+  }
+
+  function _rawClues(logic,fn,$global,caller,fullref) {
     var args,ref;
 
     if (!$global) $global = {};
 
     if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
-      return clues({},logic,$global,caller,fullref)
-        .then(function(logic) {
-          return clues(logic,fn,$global,caller,fullref);
-        });
+      return promiseHelper(_rawClues({},logic,$global,caller,fullref),
+        logic => _rawClues(logic,fn,$global,caller,fullref));
       
     if (typeof fn === 'string') {
       ref = fn;
@@ -42,18 +73,22 @@
       var dot = ref.search(/ᐅ|\./);
       if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
-        return clues(logic,next,$global,caller,fullref)
-          .then(function(d) {
+
+        let handleError = e => {
+          if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function') {
+            return logic[ref] = logic[ref] || _rawClues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref);
+          }
+          else throw e;
+        }
+
+        return promiseHelper(_rawClues(logic,next,$global,caller,fullref),
+          d => {
             logic = d;
             ref = ref.slice(dot+1);
             fullref = (fullref ? fullref+'.' : '')+next;
-            return clues(logic,ref,$global,caller,fullref);
-          })
-          .catch(function(e) {
-            if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
-              return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref);
-            else throw e;
-          });
+            return promiseHelper(_rawClues(logic,ref,$global,caller,fullref), a => a, handleError);
+          },
+          handleError);
       }
 
       fullref = (fullref ? fullref+'.' : '')+ref;
@@ -62,7 +97,7 @@
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
           fn = Object.getPrototypeOf(logic)[ref];
         else if ($global[ref] && caller && caller !== '__user__')
-          return clues($global,ref,$global,caller,fullref);
+          return _rawClues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
         else return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
@@ -75,9 +110,9 @@
         var obj = fn[0];
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
-        var result = clues(obj,fn,$global,caller,fullref);
+        var result = _rawClues(obj,fn,$global,caller,fullref);
         if (ref) {
-          logic[ref] = result;
+          logic[ref] = result; 
         }
         return result;
       }
@@ -100,19 +135,20 @@
       if (fn && typeof fn.then === 'function')
         return fn.then(function(d) {
           // Pass results through clues again if its a function or an array (could be array function)
-          return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? clues(logic,d,$global,caller,fullref) : d;
+          return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? _rawClues(logic,d,$global,caller,fullref) : d;
         });
       else 
-        return clues.Promise.resolve(fn);
+        return fn
     }
 
     args = (args || matchArgs(fn));
 
     // Shortcuts to define empty objects with $property or $external
-    if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
-    if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$external: fn.bind(logic)});
+    if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = {$property: fn.bind(logic)};
+    if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = {$external: fn.bind(logic)};
     if (fn.name === '$service') return fn;
     
+    let argsHasPromise = false;
     args = args.map(function(arg) {
         var optional,showError,res;
         if (optional = (arg[0] === '_')) arg = arg.slice(1);
@@ -120,28 +156,37 @@
 
         if (arg[0] === '$' && logic[arg] === undefined) {
           if (arg === '$caller')
-            res = clues.Promise.resolve(caller);
+            return caller;
           else if (arg === '$fullref')
-            res = clues.Promise.resolve(fullref);
+            return fullref;
           else if (arg === '$global')
-            res = clues.Promise.resolve($global);
+            return $global;
         }
 
-        return res || clues(logic,arg,$global,ref || 'fn',fullref)
-          .then(null,function(e) {
+        res = promiseHelper(_rawClues(logic,arg,$global,ref || 'fn',fullref), d => d,
+          e => {
             if (optional) return (showError) ? e : undefined;
-            else throw e;
+            throw e;
           });
+
+        if (!argsHasPromise && res && res.then && typeof res.then === 'function') {
+          argsHasPromise = true;
+        }
+
+        return res;
       });
 
-    var inputs =  clues.Promise.all(args),
+    var inputs = argsHasPromise ? clues.Promise.all(args) : args,
         wait = Date.now(),
         duration;
 
-    var value = inputs
-      .then(function(args) {
+    var value = promiseHelper(inputs,
+      args => {
         duration = Date.now();
         return clues.Promise.try(function() {
+          // TODO: this should not be done inside of a promise.  we should try/catch around it direct,
+          // and if we get back a promise, so be it -- but if not, we can just pass it back along
+          // to clues
           return fn.apply(logic || {}, args);
         })
         .catch(function(e) {
@@ -158,15 +203,17 @@
             $global.$logError(e, fullref);
           throw e;
         });
-      })
-      .finally(function() {
+      },
+      error => {
+        throw error;
+      },
+      () => {
         if (typeof $global.$duration === 'function')
           $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
-      })
-      .then(function(d) {
-        return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
-      })
-      .catch(function(e) {
+      });
+
+    value = promiseHelper(value, d => (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref),
+      e => {
         if (typeof e !== 'object')
           e = { message : e};
         e.error = true;

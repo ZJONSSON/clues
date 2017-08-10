@@ -97,12 +97,14 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
 
     t.test('asking for a property', async t => {
       t.same( await clues(facts,'shorthand.test.1'),'ok:test.1','returns right value');
-      t.same( facts.shorthand.value()['test.1'].value(),'ok:test.1','stores promise with value');
+
+      // TODO: value() shouldn't really be needed here... it should just be complete by the end
+      t.same( facts.shorthand['test.1'].value(),'ok:test.1','stores promise with value');
     });
 
     t.test('asking for another property', async t => {
       t.same( await clues(facts,'shorthand.test.2'),'ok:test.2','returns right value');
-      t.same( facts.shorthand.value()['test.2'].value(),'ok:test.2','stores promise with value');
+      t.same( facts.shorthand['test.2'].value(),'ok:test.2','stores promise with value');
     });
   });
 
@@ -119,24 +121,24 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     t.test('regular function', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument.test.1'),'ok:test.1','returns right value');
-        t.same( facts.as_argument.value()['test.1'].value(),'ok:test.1','stores promise with value');
+        t.same( facts.as_argument['test.1'].value(),'ok:test.1','stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument.test.2'),'ok:test.2','returns right value');
-        t.same( facts.as_argument.value()['test.2'].value(),'ok:test.2','stores promise with value');
+        t.same( facts.as_argument['test.2'].value(),'ok:test.2','stores promise with value');
       });
     });
 
     t.test('ES6 fat arrow', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument_es6.test.1'),'ok:test.1','returns right value');
-        t.same( facts.as_argument_es6.value()['test.1'].value(),'ok:test.1','stores promise with value');
+        t.same( facts.as_argument_es6['test.1'].value(),'ok:test.1','stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument_es6.test.2'),'ok:test.2','returns right value');
-        t.same( facts.as_argument_es6.value()['test.2'].value(),'ok:test.2','stores promise with value');
+        t.same( facts.as_argument_es6['test.2'].value(),'ok:test.2','stores promise with value');
       });
     });
 
