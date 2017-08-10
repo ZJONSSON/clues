@@ -19,8 +19,8 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     t.test('asking for non-existent property', async t => {
       const d = await clues(facts,'simple.1234');
       t.same(d,1236,'returns the $property function value');
-      t.ok(facts.simple['1234'].isFulfilled(),'resolved promise is placed on logic');
-      t.same(facts.simple['1234'].value(),1236,'promise contains value');
+      t.ok(facts.simple['1234'],'resolved promise is placed on logic');
+      t.same(facts.simple['1234'],1236,'promise contains value');
       t.same(facts.simple.count,1,'function is called once');
     });
 
@@ -81,9 +81,9 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
 
     t.test('asking for non-existent property', async t => {
       t.same( await clues(facts,'funct.1234'), 1239, 'returns value');
-      t.same(facts.funct.value().count,1,'$property is called once');
+      t.same(facts.funct.count,1,'$property is called once');
       t.same( await clues(facts,'funct.1234'), 1239, 'previous results are cached');
-      t.same(facts.funct.value().count,1,'$an fn not run again for same property');
+      t.same(facts.funct.count,1,'$an fn not run again for same property');
     });
   });
 
@@ -98,8 +98,8 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
 
     t.test('asking for non existing property nested', async t => {
       t.same( await clues(facts,'nested.1234.a.b.c'),1244,'returns correct value');
-      t.ok(facts.nested['1234'].value().a.b.c.isFulfilled(),'registers fulfilled promise');
-      t.same(facts.nested['1234'].value().a.b.c.value(),1244,'promise registers value');
+      t.ok(facts.nested['1234'].a.b.c,'registers fulfilled promise');
+      t.same(facts.nested['1234'].a.b.c,1244,'promise registers value');
     });
 
     t.test('error raised in $property', async t => {
@@ -120,12 +120,12 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
 
     t.test('asking for a property', async t => {
       t.same( await clues(facts,'shorthand.2'),10,'returns right value');
-      t.same( facts.shorthand.value()['2'].value(),10,'stores promise with value');
+      t.same( facts.shorthand['2'],10,'stores promise with value');
     });
 
     t.test('asking for another property', async t => {
       t.same( await clues(facts,'shorthand.4'),20,'returns right value');
-      t.same( facts.shorthand.value()['4'].value(),20,'stores promise with value');
+      t.same( facts.shorthand['4'],20,'stores promise with value');
     });
   });
 
@@ -142,24 +142,24 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     t.test('regular function', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument.2'),10,'returns right value');
-        t.same( facts.as_argument.value()['2'].value(),10,'stores promise with value');
+        t.same( facts.as_argument['2'],10,'stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument.4'),20,'returns right value');
-        t.same( facts.as_argument.value()['4'].value(),20,'stores promise with value');
+        t.same( facts.as_argument['4'],20,'stores promise with value');
       });
     });
 
     t.test('ES6 fat arrow', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument_es6.2'),10,'returns right value');
-        t.same( facts.as_argument_es6.value()['2'].value(),10,'stores promise with value');
+        t.same( facts.as_argument_es6['2'],10,'stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument_es6.4'),20,'returns right value');
-        t.same( facts.as_argument_es6.value()['4'].value(),20,'stores promise with value');
+        t.same( facts.as_argument_es6['4'],20,'stores promise with value');
       });
     });
 

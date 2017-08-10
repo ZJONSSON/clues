@@ -19,8 +19,8 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     t.test('asking for non-existent property', async t => {
       const d = await clues(facts,'simple.test.1');
       t.same(d,'simple:test.1','returns the $external function value');
-      t.ok(facts.simple['test.1'].isFulfilled(),'resolved promise is placed on logic');
-      t.same(facts.simple['test.1'].value(),'simple:test.1','promise contains value');
+      t.ok(facts.simple['test.1'],'resolved promise is placed on logic');
+      t.same(facts.simple['test.1'],'simple:test.1','promise contains value');
       t.same(facts.simple.count,1,'function is called once');
     });
 
@@ -42,6 +42,7 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
       //t.same(e.ref,'abc','ref is ok');
       t.same(e.fullref,'simple.STOP','fullref is ok');
       t.same(e.caller,'STOP','caller is ok');
+      console.log('STOP', facts.simple.STOP);
       t.equal(facts.simple.STOP.isRejected(),true,'rejected promise in logic');
       t.equal(facts.simple.STOP.reason().message,'STOP_ERROR','rejected promise has error');
       t.equal(facts.simple.count,3,'$external has now been called 3 times');
@@ -81,9 +82,9 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
 
     t.test('asking for non-existent property', async t => {
       t.same( await clues(facts,'funct.test.1'), 'ok:test.1', 'returns value');
-      t.same(facts.funct.value().count,1,'$external is called once');
+      t.same(facts.funct.count,1,'$external is called once');
       t.same( await clues(facts,'funct.test.1'), 'ok:test.1', 'previous results are cached');
-      t.same(facts.funct.value().count,1,'$an fn not run again for same property');
+      t.same(facts.funct.count,1,'$an fn not run again for same property');
     });
   });
 
@@ -99,12 +100,12 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
       t.same( await clues(facts,'shorthand.test.1'),'ok:test.1','returns right value');
 
       // TODO: value() shouldn't really be needed here... it should just be complete by the end
-      t.same( facts.shorthand['test.1'].value(),'ok:test.1','stores promise with value');
+      t.same( facts.shorthand['test.1'],'ok:test.1','stores promise with value');
     });
 
     t.test('asking for another property', async t => {
       t.same( await clues(facts,'shorthand.test.2'),'ok:test.2','returns right value');
-      t.same( facts.shorthand['test.2'].value(),'ok:test.2','stores promise with value');
+      t.same( facts.shorthand['test.2'],'ok:test.2','stores promise with value');
     });
   });
 
@@ -121,24 +122,24 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     t.test('regular function', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument.test.1'),'ok:test.1','returns right value');
-        t.same( facts.as_argument['test.1'].value(),'ok:test.1','stores promise with value');
+        t.same( facts.as_argument['test.1'],'ok:test.1','stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument.test.2'),'ok:test.2','returns right value');
-        t.same( facts.as_argument['test.2'].value(),'ok:test.2','stores promise with value');
+        t.same( facts.as_argument['test.2'],'ok:test.2','stores promise with value');
       });
     });
 
     t.test('ES6 fat arrow', async t => {
       t.test('asking for a property', async t => {
         t.same( await clues(facts,'as_argument_es6.test.1'),'ok:test.1','returns right value');
-        t.same( facts.as_argument_es6['test.1'].value(),'ok:test.1','stores promise with value');
+        t.same( facts.as_argument_es6['test.1'],'ok:test.1','stores promise with value');
       });
 
       t.test('asking for another property', async t => {
         t.same( await clues(facts,'as_argument_es6.test.2'),'ok:test.2','returns right value');
-        t.same( facts.as_argument_es6['test.2'].value(),'ok:test.2','stores promise with value');
+        t.same( facts.as_argument_es6['test.2'],'ok:test.2','stores promise with value');
       });
     });
 
