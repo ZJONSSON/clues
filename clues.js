@@ -259,8 +259,10 @@
       d => (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref),
       e => { throw createEx(e, fullref, caller, ref); });
 
-    if (fn.name == 'private' || fn.name == '$private')
+    if (fn.name == 'private' || fn.name == '$private') {
+      if (!isPromise(value)) value = clues.Promise.resolve(value)
       value.private = true;
+    }
 
     storeRef(logic, ref, value, fullref, caller);
     return value;
