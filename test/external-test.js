@@ -42,7 +42,6 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
       //t.same(e.ref,'abc','ref is ok');
       t.same(e.fullref,'simple.STOP','fullref is ok');
       t.same(e.caller,'STOP','caller is ok');
-      console.log('STOP', facts.simple.STOP);
       t.equal(facts.simple.STOP.isRejected(),true,'rejected promise in logic');
       t.equal(facts.simple.STOP.reason().message,'STOP_ERROR','rejected promise has error');
       t.equal(facts.simple.count,3,'$external has now been called 3 times');
