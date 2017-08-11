@@ -37,6 +37,7 @@
   function promiseHelper(val, success, error, _finally, _errorMessage) {
     if (isPromise(val)) {
       // if it's already resolve, we can just use that direct
+      if (!val.isFulfilled) val = clues.Promise.resolve(val);
       if (val.isFulfilled()) return promiseHelper(val.value(), success, error, _finally);
       if (val.isRejected()) return promiseHelper(null, success, error, _finally, val.reason());
 
