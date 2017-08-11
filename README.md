@@ -73,7 +73,6 @@ There are only a few restrictions and conventions you must into account when def
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
 * Any function explicitly named [`$private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
-* Any function explicitly named `$noThrow` will return any error as an object not as a rejection (similar to `__` prefix in argument names)
 * ES6 arrow functions will be resoleved as regular functions with same `this` context
 
 That's pretty much it.

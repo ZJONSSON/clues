@@ -10,8 +10,9 @@
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
-  var reject = (e,fullref,caller) => clues.Promise.reject({ref : e.ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true});
-  var rejectSuppressed = (e,fullref,caller) => { e = reject(e,fullref,caller); e.suppressUnhandledRejections(); return e; };
+  var createEx = (e,fullref,caller,ref) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true, notDefined: e.notDefined, report: e.report}); 
+  var reject = (e,fullref,caller,ref) => clues.Promise.reject(createEx(e,fullref,caller,ref));
+  var rejectSuppressed = (e,fullref,caller,ref) => { e = reject(e,fullref,caller,ref); e.suppressUnhandledRejections(); return e; };
   var isPromise = f => f && f.then && typeof f.then === 'function';
 
   function matchArgs(fn) {
@@ -36,8 +37,8 @@
   function promiseHelper(val, success, error, _finally, _errorMessage) {
     if (isPromise(val)) {
       // if it's already resolve, we can just use that direct
-      if (val.isFulfilled && val.isFulfilled()) return promiseHelper(val.value(), success, error, _finally);
-      if (val.isRejected && val.isRejected()) return promiseHelper(null, success, error, _finally, val.reason());
+      if (val.isFulfilled()) return promiseHelper(val.value(), success, error, _finally);
+      if (val.isRejected()) return promiseHelper(null, success, error, _finally, val.reason());
 
       let result = val;
       if (success) result = result.then(success);
@@ -61,7 +62,7 @@
 
     let result = null;
     try { result = success(val); } 
-    catch (e) { return promiseHelper(null, success, error, _finally, e); }
+    catch (e) { result = promiseHelper(null, success, error, _finally, e); }
     if (_finally) _finally(val);
     return result;
   }
@@ -106,7 +107,7 @@
               }
               catch (e) {
                 fullref = (fullref ? fullref+'.' : '')+ref;
-                storeRef(logic, ref, rejectSuppressed({ref : ref, message: e.message || e, fullref:fullref, caller: ref, stack:e.stack, value: value, error:true}), fullref, caller);
+                storeRef(logic, ref, rejectSuppressed({message:e.message || e, value: value}, fullref, ref, ref), fullref, caller);
               }
             }
             return logic[ref];
@@ -135,7 +136,7 @@
           return _rawClues($global,ref,$global,caller,fullref);
         else if (logic && logic.$property && typeof logic.$property === 'function')
           fn = logic[ref] = function() { return logic.$property.call(logic,ref); };
-        else return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true, error:true});
+        else return rejectSuppressed({message: ref+' not defined', notDefined:true},fullref,caller,ref);
       }
     }
 
@@ -162,7 +163,7 @@
 
     // If fn name is private or promise private is true, reject when called directly
     if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
-     return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true, error:true});
+     return rejectSuppressed({message: ref+' not defined', notDefined:true }, fullref, caller, ref);
 
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || ((ref && ref[0] === '$') && fn.name !== '$prep')) {
@@ -215,40 +216,45 @@
         wait = Date.now(),
         duration;
 
-    var value = promiseHelper(inputs,
-      args => {
-        duration = Date.now();
+    let solveFn = args => {
+      duration = Date.now();
+      let result = fn.apply(logic || {}, args);
+      if (isPromise(result) && !result.isFulfilled) result = clues.Promise.resolve(result); // wrap non-bluebird promise
+      return result;
+    };
 
-        try {
-          let result = fn.apply(logic || {}, args);
-          if (isPromise(result) && !result.isFulfilled) result = Promise.resolve(result); // wrap non-bluebird promise
-          return result;
-        }
-        catch (e) {
-          // If fn is a class we solve for the constructor variables (if defined) and return a new instance
-          if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
-            args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
-            args = args ? args.split(',') : [];
-            return [logic].concat(args).concat(function() {
-              args = [null].concat(Array.prototype.slice.call(arguments));
-              return new (Function.prototype.bind.apply(fn,args));
-            });
-          }
-          e = {ref : ref, message: e.message || e, fullref:fullref, caller: caller, stack:e.stack, value: value, error:true};
-          
-          if (e && e.stack && typeof $global.$logError === 'function')
-            $global.$logError(e, fullref);
-          
-          storeRef(logic, ref, rejectSuppressed(e), fullref, caller);
-          throw e;
-        }
-      },
-      error => { throw error; },
-      () => {
-        if (typeof $global.$duration === 'function')
-          $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
-      });
+    let handleError = e => {
+      handleError = e => { throw e };
 
+      // If fn is a class we solve for the constructor variables (if defined) and return a new instance
+      if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
+        args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
+        args = args ? args.split(',') : [];
+        return [logic].concat(args).concat(function() {
+          args = [null].concat(Array.prototype.slice.call(arguments));
+          return new (Function.prototype.bind.apply(fn,args));
+        });
+      }
+      let wrappedEx = createEx({message: e.message || e, caller: caller, stack: e.stack, value: value, error:true, report:true }, fullref, caller, ref);
+      if (e && e.stack && typeof $global.$logError === 'function') $global.$logError(wrappedEx, fullref);
+      storeRef(logic, ref, rejectSuppressed(wrappedEx), fullref, caller);
+      throw wrappedEx;
+    };
+
+    let captureTime = () => {
+      if (typeof $global.$duration === 'function')
+        $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
+    };
+
+    var value = null;
+    if (isPromise(inputs)) {
+      value = inputs.then(d => solveFn(d)).catch(handleError).finally(captureTime);
+    }
+    else {
+      try { value = solveFn(inputs); }
+      catch (e) { value = handleError(e); }
+    }
+    value = promiseHelper(value, d => d, handleError, captureTime);
     value = promiseHelper(value, 
       d => {
         return (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref);
@@ -260,8 +266,6 @@
         e.ref = e.ref || ref;
         e.fullref = e.fullref || fullref;
         e.caller = e.caller || caller || '';
-        if (fn && fn.name == '$noThrow')
-          return e;
         throw e;
       });
 

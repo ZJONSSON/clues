@@ -48,27 +48,6 @@ t.test('error', {autoend: true},t => {
     });
   });
 
-  t.test('function named $noThrow', {autoend: true}, t => {
-    const facts = Object.create(Logic);
-
-    t.test('thrown rejection', async t => {
-      const e = await clues(facts,function $noThrow(DEP) { return DEP;});
-      t.same(e.error,true,'Returns an object with the error');
-      t.same(e.ref,'ERR','ref ok');
-      t.equal(e.message,'Could not process','message ok');
-    });
-
-    t.test('error within subsequent fn', async t => {
-      const fn = function $noThrow() {
-        return ['DEP',Object];
-      };
-      const e = await clues(facts,fn);
-      t.same(e.error,true,'Returns an object with the error');
-      t.same(e.ref,'ERR','ref ok');
-      t.equal(e.message,'Could not process','message ok');
-    });
-  });
-
   t.test('$logError', {autoend: true}, t => {
 
     const Global = {
