@@ -256,18 +256,8 @@
     }
     value = promiseHelper(value, d => d, handleError, captureTime);
     value = promiseHelper(value, 
-      d => {
-        return (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref);
-      },
-      e => {
-        if (typeof e !== 'object')
-          e = { message : e};
-        e.error = true;
-        e.ref = e.ref || ref;
-        e.fullref = e.fullref || fullref;
-        e.caller = e.caller || caller || '';
-        throw e;
-      });
+      d => (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref),
+      e => { throw createEx(e, fullref, caller, ref); });
 
     if (fn.name == 'private' || fn.name == '$private')
       value.private = true;
