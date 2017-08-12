@@ -186,6 +186,7 @@
     
     let argsHasPromise = false;
     args = args.map(function(arg) {
+      if (arg === null || arg === undefined) return arg;
       var optional,showError,res;
       if (optional = (arg[0] === '_')) arg = arg.slice(1);
       if (showError = (arg[0] === '_')) arg = arg.slice(1);
