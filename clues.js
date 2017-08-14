@@ -200,7 +200,7 @@
     if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = {$external: fn.bind(logic)};
     if (fn.name === '$service') return fn;
     
-    let argsHasPromise = false;
+    let argsHasPromise = false, errorArgs = null;
     args = args.map(function(arg) {
       if (arg === null || arg === undefined) return arg;
       var optional,showError,res;
@@ -215,7 +215,8 @@
 
       let processError = e => {
         if (optional) return (showError) ? e : undefined;
-        return reject(e);
+        errorArgs = reject(e);
+        return errorArgs;
       };
 
       try {
@@ -230,7 +231,7 @@
       return res;
     });
 
-    var inputs = argsHasPromise ? clues.Promise.all(args) : args,
+    var inputs = errorArgs ? errorArgs : (argsHasPromise ? clues.Promise.all(args) : args),
         wait = Date.now(),
         duration, 
         hasHandledError = false;
