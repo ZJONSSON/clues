@@ -213,8 +213,9 @@
 
       let processError = e => {
         if (optional) return (showError) ? e : undefined;
-        errorArgs = reject(e);
-        return errorArgs;
+        let rejection = reject(e);
+        if (!errorArgs) errorArgs = rejection;
+        return rejection;
       };
 
       try {
@@ -267,7 +268,7 @@
 
     var value = null;
     if (errorArgs) {
-      value = handleError(errorArgs);
+      value = handleError(errorArgs.reason());
     }
     else if (isPromise(inputs)) {
       value = inputs.then(d => solveFn(d)).catch(e => {
