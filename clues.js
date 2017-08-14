@@ -10,7 +10,7 @@
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
-  var createEx = (e,fullref,caller,ref) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true, notDefined: e.notDefined, report: e.report}); 
+  var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true, notDefined: e.notDefined, report: e.report, value: value, report: report}); 
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e,fullref,caller,ref));
   var isPromise = f => f && f.then && typeof f.then === 'function';
 
@@ -41,7 +41,10 @@
       let rawCluesResult = _rawClues(logic,fn,$global,caller,fullref)
       return clues.Promise.resolve(rawCluesResult); 
     }
-    catch (e) { return reject(e,fullref,caller) }
+    catch (e) { 
+      console.log('ffff',e);
+      return reject(e,fullref,caller) 
+    }
   }
 
   function promiseHelper(val, success, error, _finally, _errorMessage) {
@@ -59,7 +62,7 @@
     }
 
     if (_errorMessage) {
-      let result = reject(_errorMessage), rethrow = _errorMessage;
+      let result = reject(_errorMessage);
       if (error) {
         result = error(_errorMessage);
       }
@@ -83,6 +86,7 @@
     if (ref) {
       logic[ref] = value;
       if (logic[ref] !== value) {
+        if (value && value.reason && value.isRejected() && value.reason().message === 'Object immutable') return null;
         try {
           Object.defineProperty(logic,ref,{value: value, enumerable: true, configurable: true, writable: true});
           return value;
@@ -211,8 +215,7 @@
 
       let processError = e => {
         if (optional) return (showError) ? e : undefined;
-        throw e;
-        // return reject(e);
+        return reject(e);
       };
 
       try {
@@ -229,7 +232,8 @@
 
     var inputs = argsHasPromise ? clues.Promise.all(args) : args,
         wait = Date.now(),
-        duration;
+        duration, 
+        hasHandledError = false;
 
     let solveFn = args => {
       duration = Date.now();
@@ -239,7 +243,8 @@
     };
 
     let handleError = e => {
-      handleError = e => reject(e);
+      if (hasHandledError) return reject(e);
+      hasHandledError = true;
 
       // If fn is a class we solve for the constructor variables (if defined) and return a new instance
       if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
@@ -250,7 +255,8 @@
           return new (Function.prototype.bind.apply(fn,args));
         });
       }
-      let wrappedEx = createEx({message: e.message || e, caller: caller, stack: e.stack, value: value, error:true, report:true }, fullref, caller, ref);
+
+      let wrappedEx = createEx(e, fullref, caller, ref, value, true);
       if (e && e.stack && typeof $global.$logError === 'function') $global.$logError(wrappedEx, fullref);
       return storeRef(logic, ref, reject(wrappedEx), fullref, caller);
     };
@@ -262,13 +268,17 @@
 
     var value = null;
     if (isPromise(inputs)) {
-      value = inputs.then(d => solveFn(d)).catch(handleError).finally(captureTime);
+      value = inputs.then(d => solveFn(d)).catch(e => {
+        return handleError(e);
+      }).finally(captureTime);
     }
     else {
       try { value = solveFn(inputs); }
       catch (e) { value = handleError(e); }
     }
-    value = promiseHelper(value, d => d, handleError, captureTime);
+    value = promiseHelper(value, d => d, e => {
+      return handleError(e);
+    }, captureTime);
     value = promiseHelper(value, 
       d => (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref),
       e => reject(e, fullref, caller, ref));
