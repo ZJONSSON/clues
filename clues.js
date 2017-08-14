@@ -268,6 +268,7 @@
 
     var value = null;
     if (errorArgs) {
+      args.forEach(input => input && input.suppressUnhandledRejections && input.suppressUnhandledRejections());
       value = handleError(errorArgs.reason());
     }
     else if (isPromise(inputs)) {
