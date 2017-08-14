@@ -36,13 +36,11 @@
       clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
     }
 
-    //return clues.Promise.resolve(_rawClues(logic,fn,$global,caller,fullref));
     try { 
       let rawCluesResult = _rawClues(logic,fn,$global,caller,fullref)
       return clues.Promise.resolve(rawCluesResult); 
     }
     catch (e) { 
-      console.log('ffff',e);
       return reject(e,fullref,caller) 
     }
   }
@@ -268,7 +266,10 @@
     };
 
     var value = null;
-    if (isPromise(inputs)) {
+    if (errorArgs) {
+      value = handleError(errorArgs);
+    }
+    else if (isPromise(inputs)) {
       value = inputs.then(d => solveFn(d)).catch(e => {
         return handleError(e);
       }).finally(captureTime);
