@@ -33,9 +33,14 @@
       // fast promise rejection
       const Rejection = clues.Promise.reject();
       Rejection.suppressUnhandledRejections();
-      clues.reject =  d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
+      clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
     }
-    try { return clues.Promise.resolve(_rawClues(logic,fn,$global,caller,fullref)); }
+
+    //return clues.Promise.resolve(_rawClues(logic,fn,$global,caller,fullref));
+    try { 
+      let rawCluesResult = _rawClues(logic,fn,$global,caller,fullref)
+      return clues.Promise.resolve(rawCluesResult); 
+    }
     catch (e) { return reject(e,fullref,caller) }
   }
 
@@ -54,21 +59,21 @@
     }
 
     if (_errorMessage) {
-      let result = val, rethrow = _errorMessage;
+      let result = reject(_errorMessage), rethrow = _errorMessage;
       if (error) {
-        try { 
-          result = error(_errorMessage);
-          rethrow = null;
-        } catch (e) { rethrow = e; }
+        result = error(_errorMessage);
       }
       if (_finally) _finally(val);
-      if (rethrow) throw rethrow;
-      //if (rethrow) return reject(rethrow);
       return result;
     }
 
     let result = null;
-    try { result = success(val); } 
+    try { 
+      result = success(val); 
+      if (isPromise(result) && result.isRejected && result.isRejected()) {
+        result = promiseHelper(null, success, error, _finally, result.reason());
+      }
+    } 
     catch (e) { result = promiseHelper(null, success, error, _finally, e); }
     if (_finally) _finally(val);
     return result;
