@@ -7,6 +7,11 @@
     self.clues = clues;
   }
 
+  // Make 3.x branch future compatible
+  clues.reject = function(d) {
+    return clues.Promise.reject(d);
+  };
+
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
