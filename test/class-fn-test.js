@@ -21,9 +21,7 @@ t.test('Class functions', {autoend: true}, async t => {
     c() {
       return 7;
     }
-    f(a,b,c,d,e) {
-      return a+b+c+d+e;
-    }
+    f(a,b,c) { return (d,e) => a+b+c+d+e;}
     met$h_od2 (  a , b   ) {
       return a + b;
     }
