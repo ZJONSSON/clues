@@ -8,7 +8,7 @@
   }
 
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
-  var reEs6 =  /^\s*\({0,1}(.*?)\){0,1}\s*=>/;
+  var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
   var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true, notDefined: e.notDefined, report: e.report, value: value, report: report}); 
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e,fullref,caller,ref));
