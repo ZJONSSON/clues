@@ -28,7 +28,7 @@
     };
   }
 
-  function fetch() {
+  function fetch(options) {
     var self = this,
         buffer = '',
         queue = self.$queue;
@@ -43,9 +43,18 @@
     var r = new XMLHttpRequest(),
         last = 0;
 
-    r.open('POST','/api/'+Object.keys(queue).join(','),true);
+    var keys = '',
+        input = Object.assign({},self.$input);
+
+    if (options.fnUrl) {
+      keys = Object.keys(queue).join(',');
+    } else {
+      input.fn = Object.keys(queue);
+    }
+
+    r.open('POST','/api/'+keys,true);
     r.setRequestHeader('Content-Type','application/json;charset=UTF-8');
-    r.send(JSON.stringify(self.$input));
+    r.send(JSON.stringify(input));
     r.onprogress = function() {
       processBuffer(r.responseText.slice(last));
       last = r.responseText.length;
