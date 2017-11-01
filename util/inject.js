@@ -22,7 +22,8 @@ function inject(obj, prop, $global) {
 
     var o = obj;
 
-    function nextLevel() {
+    function nextLevel(o,base) {
+      base = base.slice();
       var next = base.shift();
       var original = o[next];
 
@@ -40,10 +41,9 @@ function inject(obj, prop, $global) {
           Object.defineProperty(o,item,{value: value, enumerable: true, writable: true});
       } else {
         var fn = function() {
-          return clues(o,original || [],$global,'set','set')
-            .then(d => {
-              o = d;
-              return clues.Promise.try(o ? nextLevel : Object).then( () => d);
+          return clues(this,original || [],$global,'set','set')
+            .then(d => {              
+              return clues.Promise.resolve(d && nextLevel(d,base)).then( () => d);
             });
         };
 
@@ -51,7 +51,7 @@ function inject(obj, prop, $global) {
       }
     }
 
-    return nextLevel();
+    return nextLevel(o,base);
   })
   .then(function() {
     return obj;

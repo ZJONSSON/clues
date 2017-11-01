@@ -72,7 +72,7 @@ t.test('error', {autoend: true},t => {
     t.test('promise rejected with a stack', async t => {
       const $global = Object.create(Global);
       const facts = {
-        stack_error_promise: ()  => clues.Promise.reject(new Error('error'))
+        stack_error_promise: ()  => clues.reject(new Error('error'))
       };
 
       await clues(facts,'stack_error_promise',$global).then(shouldErr,Object);
@@ -93,7 +93,7 @@ t.test('error', {autoend: true},t => {
     t.test('Promise rejection without a stack', async t => {
       const $global = Object.create(Global);
       const facts = {
-        rejection_promise: function() { return Promise.reject('error');}
+        rejection_promise: function() { return clues.reject('error');}
       };
 
       await clues(facts,'rejection_promise',$global).then(shouldErr,Object);
