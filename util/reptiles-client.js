@@ -28,10 +28,11 @@
     };
   }
 
-  function fetch() {
+  function fetch(options) {
     var self = this,
         buffer = '',
-        queue = self.$queue;
+        queue = self.$queue,
+        extraHandler = options.extraHandler;
 
     delete self.$queue;
 
@@ -71,13 +72,20 @@
           if (!m) return;
 
           var key = m[1],value;
-          if (!self[key]) return;
 
           try {
             value = JSON.parse(m[2]);
           } catch(e) {
             value = {error:true,message:'JSON parse error: '+e};
           }
+
+          if (!self[key]) {
+            if (extraHandler && value && !value.error) {
+              extraHandler(key, value);
+            } 
+            return;
+          }
+
           if (value && value.error)
             queue[key].reject(value);
           else
