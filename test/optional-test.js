@@ -50,7 +50,7 @@ t.test('optional argument', {autoend: true}, t => {
     d = await clues(facts2,'showerror');
     t.same(d.error,true);
     t.same(d.message,'#Error');
-    t.same(d.fullref,'showerror.error');
+    t.same(d.fullref,'showerror(error');
     t.same(d.ref,'error');
 
   });

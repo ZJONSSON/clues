@@ -61,7 +61,8 @@
           });
       }
 
-      fullref = (fullref ? fullref+'.' : '')+ref;
+      var separator = fullref && fullref[fullref.length-1] !== '(' && '.' || '';
+      fullref = (fullref ? fullref+separator : '')+ref;
       fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
@@ -132,7 +133,7 @@
             res = clues.Promise.resolve($global);
         }
 
-        return res || clues(logic,arg,$global,ref || 'fn',fullref)
+        return res || clues(logic,arg,$global,ref || 'fn',fullref+'(')
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
             else throw e;
