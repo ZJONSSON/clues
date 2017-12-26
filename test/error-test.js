@@ -132,7 +132,7 @@ t.test('error', {autoend: true},t => {
       await clues(facts,'optional',$global);
       t.same($global.error.message,'error','error passed to $logError');
       t.ok($global.error.stack,'contains a stack');
-      t.same($global.error.fullref,'optional.stack_error','fullref ok');
+      t.same($global.error.fullref,'optional(stack_error','fullref ok');
     });
 
   });
