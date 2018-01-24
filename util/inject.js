@@ -29,10 +29,14 @@ function inject(obj, prop, $global) {
 
       if (!next) {
         original = o[item];
-        if (original !== undefined)
-          Object.defineProperty(o,'original_'+item,{writable: true, value: function private() {
+        if (original !== undefined) {
+          var isService = item[0] === '$';
+          var name = isService ? '$original_'+item.slice(1) : 'original_'+item;
+          Object.defineProperty(o,name,{writable: true, value: isService ? original : function $private() {
             return original;
           }});
+        }
+   
         if (value.error)
           value = clues.Promise.reject(value);
         if (o[item] && o[item]._fulfill && o[item].isPending())
