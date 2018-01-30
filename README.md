@@ -1,6 +1,8 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Test Coverage][circle-image]][circle-url]
+[![Coverage][coverage-image]][coverage-url]
+
 
 **clues.js** is a lean-mean-promisified-getter-machine that crunches through nested javascript objects, resolving functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just under 200 loc) that dynamically resolves dependency trees and memoizes resolutions (derived facts) along the way.   It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls. 
 
@@ -646,3 +648,5 @@ The main reason why a `$root` is not set automatically by `clues` is that there 
 [circle-url]: https://circleci.com/gh/ZJONSSON/clues/tree/master
 [downloads-image]: https://img.shields.io/npm/dm/clues.svg
 [downloads-url]: https://npmjs.org/package/clues
+[coverage-image]: https://3tjjj5abqi.execute-api.us-east-1.amazonaws.com/prod/clues/badge
+[coverage-url]: https://3tjjj5abqi.execute-api.us-east-1.amazonaws.com/prod/clues/url
