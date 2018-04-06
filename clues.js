@@ -154,7 +154,7 @@
           // If fn is a class we solve for the constructor variables (if defined) and return a new instance
           if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
             args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
-            args = args ? args.split(',') : [];
+            args = args ? args.split(',').map(function(d) { return d.trim(); }) : [];
             return [logic].concat(args).concat(function() {
               args = [null].concat(Array.prototype.slice.call(arguments));
               return new (Function.prototype.bind.apply(fn,args));
