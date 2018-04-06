@@ -5,7 +5,7 @@ const t = require('tap');
 t.test('Class functions', {autoend: true}, async t => {
 
   class TestClass {
-    constructor(d,e) {
+    constructor(d, e) {
       this.d = d;
       this.e = e;
     }
