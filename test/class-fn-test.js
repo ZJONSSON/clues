@@ -19,8 +19,8 @@ t.test('Class functions', {autoend: true}, async t => {
     b(c) {
       return 6 + c;
     }
-    c() {
-      return 7;
+    c($private) {
+        return 7;
     }
     f(a,b,c) { return (d,e,g) => a+b+c+d+e+g;}
     met$h_od2 (  a , b   ) {
@@ -61,13 +61,10 @@ t.test('Class functions', {autoend: true}, async t => {
   });
 
   t.test('Generating instance from a class', {autoend: true}, async t => {
-    t.test('with constructor', async t => {
-      t.same(await clues(a,'class.f',$global),76);
-      t.same(await clues(b,'class.f',$global),95);
+ 
+    t.test('$private as class argument', async t => {
+      const res = await clues(a,'class.c', $global).then(() => Promise.reject('ShouldErrror'),Object);
+      t.same(res.message,'c not defined');
     });
-
-    t.test('without constructor', async t => {
-      t.same(await clues(a,'class2.a',$global),2);
-    }); 
   });
 });

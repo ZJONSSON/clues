@@ -24,6 +24,8 @@
       fn.__args__ = !match ? [] : match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {
+          if (d === '$private')
+            fn.private = true;
           return d.length;
         });
     }
@@ -96,8 +98,11 @@
       }
     }
 
+    if (typeof fn === 'function')
+      args = (args || matchArgs(fn));
+
     // If fn name is private or promise private is true, reject when called directly
-    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
+    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.private || fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
      return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
@@ -111,8 +116,6 @@
       else 
         return clues.Promise.resolve(fn);
     }
-
-    args = (args || matchArgs(fn));
 
     // Shortcuts to define empty objects with $property or $external
     if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = clues.Promise.resolve({$property: fn.bind(logic)});
@@ -131,6 +134,8 @@
             res = clues.Promise.resolve(fullref);
           else if (arg === '$global')
             res = clues.Promise.resolve($global);
+          else if (arg === '$private')
+            res = fn.private = true;
         }
 
         return res || clues(logic,arg,$global,ref || 'fn',fullref+'(')
@@ -184,7 +189,7 @@
         throw e;
       });
 
-    if (fn.name == 'private' || fn.name == '$private')
+    if (fn.private || fn.name == 'private' || fn.name == '$private')
       value.private = true;
 
     value.name = fn.name;
