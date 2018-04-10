@@ -26,6 +26,8 @@
         .filter(function(d) {
           if (d === '$private')
             fn.private = true;
+          if (d === '$prep')
+            fn.prep = true;
           return d.length;
         });
     }
@@ -106,7 +108,7 @@
      return clues.Promise.reject({ref : ref, message: ref+' not defined', fullref:fullref,caller: caller, notDefined:true});
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && fn.name !== '$prep')) {
+    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && !fn.prep && fn.name !== '$prep')) {
       // If the value is a promise we wait for it to resolve to inspect the result
       if (fn && typeof fn.then === 'function')
         return fn.then(function(d) {
@@ -136,6 +138,8 @@
             res = clues.Promise.resolve($global);
           else if (arg === '$private')
             res = fn.private = true;
+          else if (arg === '$prep')
+            res = fn.prep = true;
         }
 
         return res || clues(logic,arg,$global,ref || 'fn',fullref+'(')

@@ -330,6 +330,25 @@ var Cabinet = {
 };
 ```
 
+You can also define a function as a `$prep` function by including an argument name `$prep`, which in a class definition would be something like this:
+```js
+class Cabinet {
+  something() {
+    return 5;
+  }
+
+  complicated() {
+    return 6
+  }
+
+  $adder ($prep, something, complicated) {
+    let work = something + complicated;
+    return function $service(number) {
+      return work * number;
+    }
+  }
+}
+```
 
 ### $property - lazily create children by missing reference
 If a particular property can not be found in a given object, clues will try to locate a `$property` function.  If that function exists, it is executed with the missing property name as the first argument and the missing value is set to be the function outcome.
