@@ -7,11 +7,6 @@
     self.clues = clues;
   }
 
-  // Make 3.x branch future compatible
-  clues.reject = function(d) {
-    return clues.Promise.reject(d);
-  };
-
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
@@ -37,6 +32,13 @@
   function clues(logic,fn,$global,caller,fullref) {
     var args,ref;
 
+    if (!clues.reject) {
+      // fast promise rejection
+      const Rejection = clues.Promise.reject();
+      Rejection.suppressUnhandledRejections();
+      clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
+    }
+
     if (!$global) $global = {};
 
     if (typeof logic === 'function' || (logic && typeof logic.then === 'function'))
@@ -61,7 +63,7 @@
           .catch(function(e) {
             if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function')
               return logic[ref] = logic[ref] || clues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref);
-            else throw e;
+            else return clues.reject(e);
           });
       }
 
@@ -145,7 +147,7 @@
         return res || clues(logic,arg,$global,ref || 'fn',fullref+'(')
           .then(null,function(e) {
             if (optional) return (showError) ? e : undefined;
-            else throw e;
+            else return clues.reject(e);
           });
       });
 
@@ -171,7 +173,7 @@
           }
           if (e && e.stack && typeof $global.$logError === 'function')
             $global.$logError(e, fullref);
-          throw e;
+          return clues.reject(e);
         });
       })
       .finally(function() {
@@ -190,7 +192,7 @@
         e.caller = e.caller || caller || '';
         if (fn && fn.name == '$noThrow')
           return e;
-        throw e;
+        return clues.reject(e);
       });
 
     if (fn.private || fn.name == 'private' || fn.name == '$private')
