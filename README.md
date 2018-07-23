@@ -1,6 +1,8 @@
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Test Coverage][circle-image]][circle-url]
+[![Coverage][coverage-image]][coverage-url]
+
 
 **clues.js** is a lean-mean-promisified-getter-machine that crunches through nested javascript objects, resolving functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just under 200 loc) that dynamically resolves dependency trees and memoizes resolutions (derived facts) along the way.   It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls. 
 
@@ -327,6 +329,25 @@ var Cabinet = {
 };
 ```
 
+You can also define a function as a `$prep` function by including an argument name `$prep`, which in a class definition would be something like this:
+```js
+class Cabinet {
+  something() {
+    return 5;
+  }
+
+  complicated() {
+    return 6
+  }
+
+  $adder ($prep, something, complicated) {
+    let work = something + complicated;
+    return function $service(number) {
+      return work * number;
+    }
+  }
+}
+```
 
 ### $property - lazily create children by missing reference
 If a particular property can not be found in a given object, clues will try to locate a `$property` function.  If that function exists, it is executed with the missing property name as the first argument and the missing value is set to be the function outcome.
@@ -542,16 +563,18 @@ Similarly, a private scope can be generated in-line using a function:
 where `answer.a` = 42, but `b` is unreachable
 
 #### making anonymous functions private
-An even easier way to declare functions as private is simply [naming](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name) them `$private` (or `private`).  Any functions named `$private` will not be accessible directly, only indirectly through a different function, as an input argument.  Specifically the  `caller` has to be a defined value and not equal to `__user__`).  Here is a quick example:
+An even easier way to declare functions as private is simply [naming](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name) them `$private` (or `private`).  Any functions named `$private` will not be accessible directly, only indirectly through a different function, as an input argument.  Specifically the  `caller` has to be a defined value and not equal to `__user__`).  Any function or class function that has an argument `$private` will also be defined as private. Here is a quick example:
 
 ```js
 var facts = {
   a : function $private() { return 2; },
-  b : function(a) { return a+2; }
+  b : function($private, a) { return a + 1; },
+  sum : function(a,b) { return a + b; }
 };
 
-clues(facts,'b').then(console.log) // prints 4
+clues(facts,'sum').then(console.log) // prints 5
 clues(facts,'a').catch(console.log)  // prints error
+clues(facts,'b').catch(console.log)  // prints error
 ```
 
 ### Cancellability
@@ -645,3 +668,5 @@ The main reason why a `$root` is not set automatically by `clues` is that there 
 [circle-url]: https://circleci.com/gh/ZJONSSON/clues/tree/master
 [downloads-image]: https://img.shields.io/npm/dm/clues.svg
 [downloads-url]: https://npmjs.org/package/clues
+[coverage-image]: https://3tjjj5abqi.execute-api.us-east-1.amazonaws.com/prod/clues/badge
+[coverage-url]: https://3tjjj5abqi.execute-api.us-east-1.amazonaws.com/prod/clues/url

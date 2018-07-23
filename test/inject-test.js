@@ -16,7 +16,12 @@ const Logic = {
     });
   },
   userid : ['input.userid',String],
-  never_traversed : {}
+  never_traversed : {},
+  $transform : function $prep(possibleᐅvalue) {
+    return function $service(d) {
+      return d + possibleᐅvalue;
+    };
+  }
 };
 
 
@@ -30,7 +35,13 @@ const injected = $global => inject(Object.create(Logic), {
   'impossible.to.reach' : 43,
   'possible' : {},
   'possible.value': 42,
-  'never_traversed.value' : 11
+  'never_traversed.value' : 11,
+  '$transform': function $prep($original_transform) {
+    return function $service(d) {
+      return $original_transform(d)+10;
+    };
+  }
+
 },$global);
 
 t.test('inject', {autoend: true}, t => {
@@ -53,6 +64,11 @@ t.test('inject', {autoend: true}, t => {
     t.test('injected paths that are not traversed', async t => {
       const d = await clues({},injected);
       t.same(typeof d.never_traversed,'function','are not executed');
+    });
+
+    t.test('injecting a $service', async t => {
+      const $transform = await clues(injected,'$transform',{});
+      t.same($transform(10),62);
     });
   });
 

@@ -5,9 +5,10 @@ const t = require('tap');
 t.test('Class functions', {autoend: true}, async t => {
 
   class TestClass {
-    constructor(d,e) {
+    constructor(d, e, global_g) {
       this.d = d;
       this.e = e;
+      this.g = global_g;
     }
     method1(a, b) {
       return a * b;
@@ -18,10 +19,10 @@ t.test('Class functions', {autoend: true}, async t => {
     b(c) {
       return 6 + c;
     }
-    c() {
-      return 7;
+    c($private) {
+        return 7;
     }
-    f(a,b,c) { return (d,e) => a+b+c+d+e;}
+    f(a,b,c) { return (d,e,g) => a+b+c+d+e+g;}
     met$h_od2 (  a , b   ) {
       return a + b;
     }
@@ -49,6 +50,10 @@ t.test('Class functions', {autoend: true}, async t => {
     e: 60
   };
 
+  const $global = {
+    global_g : 1
+  }
+
   t.test('Solving functions of an instance', async t => {
     const facts = new TestClass();
     t.same(await clues(facts, 'method1'), 26);
@@ -56,13 +61,10 @@ t.test('Class functions', {autoend: true}, async t => {
   });
 
   t.test('Generating instance from a class', {autoend: true}, async t => {
-    t.test('with constructor', async t => {
-      t.same(await clues(a,'class.f'),75);
-      t.same(await clues(b,'class.f'),94);
+ 
+    t.test('$private as class argument', async t => {
+      const res = await clues(a,'class.c', $global).then(() => Promise.reject('ShouldErrror'),Object);
+      t.same(res.message,'c not defined');
     });
-
-    t.test('without constructor', async t => {
-      t.same(await clues(a,'class2.a'),2);
-    }); 
   });
 });

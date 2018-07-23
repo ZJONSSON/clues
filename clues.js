@@ -1,4 +1,5 @@
 (function(self) {
+  'use strict';
   if (typeof module !== 'undefined') {
     clues.Promise = require('bluebird');
     module.exports = clues;
@@ -7,15 +8,10 @@
     self.clues = clues;
   }
 
-  // Make 3.x branch future compatible
-  clues.reject = function(d) {
-    return clues.Promise.reject(d);
-  };
-
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
-  var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack, error: true, notDefined: e.notDefined, report: e.report, value: value, report: report}); 
+  var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report, value: value, report: report}); 
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e || {},fullref,caller,ref));
   var isPromise = f => f && f.then && typeof f.then === 'function';
 
@@ -27,6 +23,10 @@
       fn.__args__ = !match ? [] : match[1].replace(/\s/g,'')
         .split(',')
         .filter(function(d) {
+          if (d === '$private')
+            fn.private = true;
+          if (d === '$prep')
+            fn.prep = true;
           return d.length;
         });
     }
@@ -87,19 +87,25 @@
 
   function storeRef(logic, ref, value, fullref, caller) {
     if (ref) {
-      logic[ref] = value;
-      if (logic[ref] !== value) {
-        if (value && value.reason && value.isRejected() && value.reason().message === 'Object immutable') return null;
+      try {
+        logic[ref] = value;
+      }
+      catch (e) {
         try {
           Object.defineProperty(logic,ref,{value: value, enumerable: true, configurable: true, writable: true});
           return value;
         }
         catch (e) {
-          return reject({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack:e.stack, value: value,error:true});
+          return reject({ref : ref, message: 'Object immutable', fullref:fullref,caller: caller, stack: e.stack || '', value: value,error:true});
         }
       }
     }
     return value;
+  }
+
+  function expandFullRef(fullref, next) {
+    var separator = fullref && fullref[fullref.length-1] !== '(' && '.' || '';
+    return (fullref ? fullref+separator : '')+next;
   }
 
   function _rawClues(logic,fn,$global,caller,fullref) {
@@ -117,16 +123,15 @@
       var dot = ref.search(/ᐅ|\./);
       if (dot > -1 && (!logic || logic[ref] === undefined)) {
         var next = ref.slice(0,dot);
-        var nextFullRef = (fullref ? fullref+'.' : '')+next;
 
         let handleError = e => {
           if (e && e.notDefined && logic && logic.$external && typeof logic.$external === 'function') {
             if (!logic[ref]) {
               try {
-                return storeRef(logic, ref, _rawClues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,(fullref ? fullref+'.' : '')+ref), fullref, caller);
+                return storeRef(logic, ref, _rawClues(logic,function() { return logic.$external.call(logic,ref); },$global,ref,expandFullRef(fullref, ref)), fullref, caller);
               }
               catch (e) {
-                fullref = (fullref ? fullref+'.' : '')+ref;
+                fullref = expandFullRef(fullref, ref);
                 return storeRef(logic, ref, reject({message:e.message || e, value: value}, fullref, ref, ref), fullref, caller);
               }
             }
@@ -140,14 +145,14 @@
         return promiseHelper(_rawClues(logic,next,$global,caller,fullref),
           d => {
             logic = d;
-            fullref = (fullref ? fullref+'.' : '')+next;
+            fullref = expandFullRef(fullref, next);
             ref = ref.slice(dot+1);
             return promiseHelper(_rawClues(logic,ref,$global,caller,fullref), a => a, handleError);
           },
           handleError);
       }
 
-      fullref = (fullref ? fullref+'.' : '')+ref;
+      fullref = expandFullRef(fullref, ref);
       fn = logic ? logic[ref] : undefined;
       if (fn === undefined) {
         if (typeof(logic) === 'object' && logic !== null && (Object.getPrototypeOf(logic) || {})[ref] !== undefined)
@@ -181,12 +186,15 @@
       }
     }
 
+    if (typeof fn === 'function')
+      args = (args || matchArgs(fn));
+
     // If fn name is private or promise private is true, reject when called directly
-    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
+    if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.private || fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
      return reject({message: ref+' not defined', notDefined:true }, fullref, caller, ref);
 
     // If the logic reference is not a function, we simply return the value
-    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && fn.name !== '$prep')) {
+    if (typeof fn !== 'function' || ((ref && ref[0] === '$') && !fn.prep && fn.name !== '$prep')) {
       // If the value is a promise we wait for it to resolve to inspect the result
       if (isPromise(fn))
         return promiseHelper(fn, d => {
@@ -195,8 +203,6 @@
       else 
         return fn
     }
-
-    args = (args || matchArgs(fn));
 
     // Shortcuts to define empty objects with $property or $external
     if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = {$property: fn.bind(logic)};
@@ -214,6 +220,14 @@
         if (arg === '$caller') return caller;
         else if (arg === '$fullref') return fullref;
         else if (arg === '$global') return $global;
+        else if (arg === '$private') {
+          fn.private = true;
+          return true;
+        }
+        else if (arg === '$prep') {
+          fn.prep = true;
+          return true;
+        }
       }
 
       let processError = e => {
@@ -224,7 +238,7 @@
       };
 
       try {
-        res = promiseHelper(_rawClues(logic,arg,$global,ref || 'fn',fullref), d => d, processError);
+        res = promiseHelper(_rawClues(logic,arg,$global,ref || 'fn',fullref + '('), d => d, processError);
       }
       catch (e) {
         res = processError(e);
@@ -240,9 +254,75 @@
         duration, 
         hasHandledError = false;
 
+
+
+    // var value = inputs
+    //   .then(function(args) {
+    //     duration = Date.now();
+    //     return clues.Promise.try(function() {
+    //       return fn.apply(logic || {}, args);
+    //     })
+    //     .catch(function(e) {
+    //       // If fn is a class we solve for the constructor variables (if defined) and return a new instance
+    //       if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
+    //         args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
+    //         args = args ? args.split(',').map(function(d) { return d.trim(); }) : [];
+    //         return [logic].concat(args).concat(function() {
+    //           args = [null].concat(Array.prototype.slice.call(arguments));
+    //           return new (Function.prototype.bind.apply(fn,args));
+    //         });
+    //       }
+    //       if (e && e.stack && typeof $global.$logError === 'function')
+    //         $global.$logError(e, fullref);
+    //       throw e;
+    //     });
+    //   })
+    //   .finally(function() {
+    //     if (typeof $global.$duration === 'function')
+    //       $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
+    //   })
+    //   .then(function(d) {
+    //     return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
+    //   })
+    //   .catch(function(e) {
+    //     if (typeof e !== 'object')
+    //       e = { message : e};
+    //     e.error = true;
+    //     e.ref = e.ref || ref;
+    //     e.fullref = e.fullref || fullref;
+    //     e.caller = e.caller || caller || '';
+    //     if (fn && fn.name == '$noThrow')
+    //       return e;
+    //     throw e;
+    //   });
+
+    // if (fn.private || fn.name == 'private' || fn.name == '$private')
+    //   value.private = true;
+
+
     let solveFn = args => {
       duration = Date.now();
-      let result = fn.apply(logic || {}, args);
+      let result = null;
+      try {
+        result = fn.apply(logic || {}, args);
+      }
+      catch (e) {
+        // If fn is a class we solve for the constructor variables (if defined) and return a new instance
+        if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
+          let constructorArgs = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
+          constructorArgs = constructorArgs ? constructorArgs.split(',').map(d => d.trim()) : [];
+          constructorArgs.push(function() {
+            let newObj = new (Function.prototype.bind.apply(fn,[null].concat(Array.prototype.slice.call(arguments))));
+            return newObj;
+          });
+
+          result = _rawClues(logic,constructorArgs,$global,ref || 'fn',fullref);
+        }
+        else {
+          throw e;
+        }
+      }
+
       if (isPromise(result) && !result.isFulfilled) result = clues.Promise.resolve(result); // wrap non-bluebird promise
       return result;
     };
@@ -250,16 +330,6 @@
     let handleError = e => {
       if (hasHandledError) return reject(e);
       hasHandledError = true;
-
-      // If fn is a class we solve for the constructor variables (if defined) and return a new instance
-      if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
-        args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
-        args = args ? args.split(',') : [];
-        return [logic].concat(args).concat(function() {
-          args = [null].concat(Array.prototype.slice.call(arguments));
-          return new (Function.prototype.bind.apply(fn,args));
-        });
-      }
 
       let wrappedEx = createEx(e || {}, fullref, caller, ref, value, true);
       if (e && e.stack && typeof $global.$logError === 'function') $global.$logError(wrappedEx, fullref);

@@ -33,7 +33,7 @@ t.test('with $caller override in factsect', async t => {
 
 t.test('$fullref', async t => {
   t.same(await clues(facts,'a.b.fullref'),'a.b.fullref','direct call shows fullref');
-  t.same(await clues(facts,'fullref'),'fullref.a.b.fullref','indirect call shows fullref');
+  t.same(await clues(facts,'fullref'),'fullref(a.b.fullref','indirect call shows fullref');
 
   const o = facts();
   o.a.b.$fullref = 'CUSTOM_FULLREF';

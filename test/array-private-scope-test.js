@@ -83,7 +83,7 @@ t.test('Array fn private scope', {autoend:true}, t => {
           t.same(e.ref,'userid','userid as ref');
           t.same(e.message,'userid not defined','right error message');
           t.same(e.caller,'hash','caller is hash');
-          t.same(e.fullref,'info.public.hash.userid','fullref');
+          t.same(e.fullref,'info(public(hash(userid','fullref');
         });
     });
   });
