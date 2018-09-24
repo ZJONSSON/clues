@@ -10,10 +10,11 @@
 
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
-  var reEs6Class = /^\s*[a-zA-Z0-9\-\$\_]+\((.*?)\)\s*{/;
-  var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report, value: value, report: report}); 
+  var reEs6Class = /^\s*[a-zA-Z0-9\-$_]+\((.*?)\)\s*{/;
+  var createEx = (e,fullref,caller,ref,value,report) => ({ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || report, value: value}); 
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e || {},fullref,caller,ref));
   var isPromise = f => f && f.then && typeof f.then === 'function';
+  var noop = d => d;
 
   function matchArgs(fn) {
     if (!fn.__args__) {
@@ -33,20 +34,19 @@
     return fn.__args__;
   }
 
-  function clues(logic,fn,$global,caller,fullref) {
-    if (!clues.reject) {
-      // fast promise rejection
-      const Rejection = clues.Promise.reject();
-      Rejection.suppressUnhandledRejections();
-      clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
-    }
 
+  // fast promise rejection
+  const Rejection = clues.Promise.reject();
+  Rejection.suppressUnhandledRejections();
+  clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
+
+  function clues(logic,fn,$global,caller,fullref) {
     try { 
-      let rawCluesResult = _rawClues(logic,fn,$global,caller,fullref)
+      let rawCluesResult = _rawClues(logic,fn,$global,caller,fullref);
       return clues.Promise.resolve(rawCluesResult); 
     }
     catch (e) { 
-      return reject(e,fullref,caller) 
+      return reject(e,fullref,caller);
     }
   }
 
@@ -140,7 +140,7 @@
           else {
             return reject(e);
           } 
-        }
+        };
 
         return promiseHelper(_rawClues(logic,next,$global,caller,fullref),
           d => {
@@ -172,10 +172,7 @@
         fn = fn.slice(1);
         if (fn.length === 1) fn = fn[0];
         var result = _rawClues(obj,fn,$global,caller,fullref);
-        if (ref) {
-          logic[ref] = result; 
-        }
-        return result;
+        return storeRef(logic, ref, result, fullref, caller);
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];
@@ -201,20 +198,20 @@
           return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? _rawClues(logic,d,$global,caller,fullref) : d;
         });
       else 
-        return fn
+        return fn;
     }
 
     // Shortcuts to define empty objects with $property or $external
-    if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return logic[ref] = {$property: fn.bind(logic)};
-    if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return logic[ref] = {$external: fn.bind(logic)};
+    if (fn.name === '$property' || (args[0] === '$property' && args.length === 1)) return storeRef(logic, ref, {$property: fn.bind(logic)}, fullref, caller);
+    if (fn.name === '$external' || (args[0] === '$external' && args.length === 1)) return storeRef(logic, ref, {$external: fn.bind(logic)}, fullref, caller);
     if (fn.name === '$service') return fn;
     
     let argsHasPromise = false, errorArgs = null;
     args = args.map(function(arg) {
       if (arg === null || arg === undefined) return arg;
       var optional,showError,res;
-      if (optional = (arg[0] === '_')) arg = arg.slice(1);
-      if (showError = (arg[0] === '_')) arg = arg.slice(1);
+      if ((optional = (arg[0] === '_'))) arg = arg.slice(1);
+      if ((showError = (arg[0] === '_'))) arg = arg.slice(1);
 
       if (arg[0] === '$' && logic[arg] === undefined) {
         if (arg === '$caller') return caller;
@@ -253,52 +250,6 @@
         wait = Date.now(),
         duration, 
         hasHandledError = false;
-
-
-
-    // var value = inputs
-    //   .then(function(args) {
-    //     duration = Date.now();
-    //     return clues.Promise.try(function() {
-    //       return fn.apply(logic || {}, args);
-    //     })
-    //     .catch(function(e) {
-    //       // If fn is a class we solve for the constructor variables (if defined) and return a new instance
-    //       if (e instanceof TypeError && /^Class constructor/.exec(e.message)) {
-    //         args = (/constructor\s*\((.*?)\)/.exec(fn.toString()) || [])[1];
-    //         args = args ? args.split(',').map(function(d) { return d.trim(); }) : [];
-    //         return [logic].concat(args).concat(function() {
-    //           args = [null].concat(Array.prototype.slice.call(arguments));
-    //           return new (Function.prototype.bind.apply(fn,args));
-    //         });
-    //       }
-    //       if (e && e.stack && typeof $global.$logError === 'function')
-    //         $global.$logError(e, fullref);
-    //       throw e;
-    //     });
-    //   })
-    //   .finally(function() {
-    //     if (typeof $global.$duration === 'function')
-    //       $global.$duration(fullref || ref || (fn && fn.name),[(Date.now()-duration),(Date.now())-wait],ref);
-    //   })
-    //   .then(function(d) {
-    //     return (typeof d == 'string' || typeof d == 'number') ? d : clues(logic,d,$global,caller,fullref);
-    //   })
-    //   .catch(function(e) {
-    //     if (typeof e !== 'object')
-    //       e = { message : e};
-    //     e.error = true;
-    //     e.ref = e.ref || ref;
-    //     e.fullref = e.fullref || fullref;
-    //     e.caller = e.caller || caller || '';
-    //     if (fn && fn.name == '$noThrow')
-    //       return e;
-    //     throw e;
-    //   });
-
-    // if (fn.private || fn.name == 'private' || fn.name == '$private')
-    //   value.private = true;
-
 
     let solveFn = args => {
       duration = Date.now();
@@ -355,15 +306,16 @@
       try { value = solveFn(inputs); }
       catch (e) { value = handleError(e); }
     }
-    value = promiseHelper(value, d => d, e => {
-      return handleError(e);
-    }, captureTime);
+
+    value = promiseHelper(value, noop, handleError, captureTime);
+
     value = promiseHelper(value, 
       d => (typeof d == 'string' || typeof d == 'number') ? d : _rawClues(logic,d,$global,caller,fullref),
-      e => reject(e, fullref, caller, ref));
+      e => reject(e, fullref, caller, ref)
+    );
 
     if (fn.name == 'private' || fn.name == '$private') {
-      if (!isPromise(value)) value = clues.Promise.resolve(value)
+      if (!isPromise(value)) value = clues.Promise.resolve(value);
       value.private = true;
     }
 
