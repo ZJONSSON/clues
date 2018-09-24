@@ -26,8 +26,8 @@ const code = `
   process.stdout.write(String(%GetOptimizationStatus(clues)));
 `;
 
-t.test('V8 compiler', async t => {code
-  const d = await execAsync('echo "'++'" | node  --allow-natives-syntax');
+t.test('V8 compiler', async t => {
+  const d = await execAsync('echo "'+code+'" | node  --allow-natives-syntax');
   console.log(d);
   t.same(!!((d & 4) || (d & 16)), true);
 });
