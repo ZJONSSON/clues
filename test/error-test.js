@@ -25,7 +25,11 @@ t.test('error', {autoend: true},t => {
 
   const Logic = {
     ERR : function() { throw 'Could not process'; },
-    DEP : function(ERR) { return 'Where is the error'; }
+    DEP : function(ERR) { return 'Where is the error'; },
+    OBJ : function() { throw {
+      message: 'somemessage',
+      details: 'somedetails'
+    }; }
   };
 
   t.test('throw', {autoend:true}, t => {
@@ -45,6 +49,13 @@ t.test('error', {autoend: true},t => {
       t.equal(e.message,'Could not process','message ok');
       t.same(e.ref,'ERR','ref ok');
       t.same(e.caller,'DEP','Should reference the first caller');
+    });
+
+    t.test('obj - directly', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'OBJ').catch(Object);
+      t.equal(e.message,'somemessage','message ok');
+      t.equal(e.details,'somedetails','details ok');
     });
   });
 
