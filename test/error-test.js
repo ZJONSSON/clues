@@ -28,7 +28,7 @@ t.test('error', {autoend: true},t => {
     DEP : function(ERR) { return 'Where is the error'; },
     OBJ : function() { throw {
       message: 'somemessage',
-      details: 'somedetails'
+      value: 'somedetails'
     }; }
   };
 
@@ -55,7 +55,7 @@ t.test('error', {autoend: true},t => {
       const facts = Object.create(Logic);
       const e = await clues(facts,'OBJ').catch(Object);
       t.equal(e.message,'somemessage','message ok');
-      t.equal(e.details,'somedetails','details ok');
+      t.equal(e.value,'somedetails','details ok');
     });
   });
 
