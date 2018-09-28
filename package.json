@@ -14,7 +14,7 @@
   },
   "main": "clues.js",
   "dependencies": {
-    "bluebird": "~3.5.0"
+    "bluebird": "~3.5.2"
   },
   "devDependencies": {
     "tap": "~10.3.2"
