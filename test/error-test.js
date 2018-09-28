@@ -25,7 +25,11 @@ t.test('error', {autoend: true},t => {
 
   const Logic = {
     ERR : function() { throw 'Could not process'; },
-    DEP : function(ERR) { return 'Where is the error'; }
+    DEP : function(ERR) { return 'Where is the error'; },
+    OBJ : function() { throw {
+      message: 'somemessage',
+      value: 'somedetails'
+    }; }
   };
 
   t.test('throw', {autoend:true}, t => {
@@ -46,26 +50,12 @@ t.test('error', {autoend: true},t => {
       t.same(e.ref,'ERR','ref ok');
       t.same(e.caller,'DEP','Should reference the first caller');
     });
-  });
 
-  t.test('function named $noThrow', {autoend: true}, t => {
-    const facts = Object.create(Logic);
-
-    t.test('thrown rejection', async t => {
-      const e = await clues(facts,function $noThrow(DEP) { return DEP;});
-      t.same(e.error,true,'Returns an object with the error');
-      t.same(e.ref,'ERR','ref ok');
-      t.equal(e.message,'Could not process','message ok');
-    });
-
-    t.test('error within subsequent fn', async t => {
-      const fn = function $noThrow() {
-        return ['DEP',Object];
-      };
-      const e = await clues(facts,fn);
-      t.same(e.error,true,'Returns an object with the error');
-      t.same(e.ref,'ERR','ref ok');
-      t.equal(e.message,'Could not process','message ok');
+    t.test('obj - directly', async t => {
+      const facts = Object.create(Logic);
+      const e = await clues(facts,'OBJ').catch(Object);
+      t.equal(e.message,'somemessage','message ok');
+      t.equal(e.value,'somedetails','details ok');
     });
   });
 

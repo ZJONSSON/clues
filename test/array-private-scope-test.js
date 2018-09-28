@@ -43,12 +43,16 @@ t.test('Array fn private scope', {autoend:true}, t => {
     const PrivateLogic  = {
       secret : 'Hidden secret',
 
-      hash : (secret,userid) => crypto.createHash('sha1')
+      hash : (secret,userid) => {
+        return crypto.createHash('sha1')
           .update(secret)
           .update(userid)
-          .digest('hex'),
+          .digest('hex');
+      },
 
-      public : (hash,_userid) => ({hash, userid : _userid})
+      public : (hash,_userid) => {
+        return {hash, userid : _userid};
+      }
     };
 
     const Logic = {

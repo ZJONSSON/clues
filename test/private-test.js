@@ -47,6 +47,7 @@ t.test('private functions', {autoend: true}, t => {
     const M3 = await clues(facts,'M3').catch(Object);
 
     t.same(MTOP,380,'is available indirectly');
+
     t.same(M1.message,'M1 not defined','private fn not available directly');
     t.same(facts.M1.value(),10,'private fn promise has the resolved value');
     t.same(M2.message,'M2 not defined','private fn not available directly');

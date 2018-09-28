@@ -4,7 +4,7 @@
 [![Coverage][coverage-image]][coverage-url]
 
 
-**clues.js** is a lean-mean-promisified-getter-machine that crunches through nested javascript objects, resolving functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (just under 200 loc) that dynamically resolves dependency trees and memoizes resolutions (derived facts) along the way.   It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls. 
+**clues.js** is a lean-mean-promisified-getter-machine that crunches through nested javascript objects, resolving functions (including ES6 arrow functions), values and promises.  Clues consists of a single getter function (~300 loc) that dynamically resolves dependency trees and memoizes resolutions (derived facts) along the way.   It handles the ordering of execution and allows you to think more about the logic of determining the result of a calculation, whether the inputs to those calculations are known values, functions, or asynchronous calls. 
 
 [Intro presentation](http://zjonsson.github.io/clues)
 
@@ -32,7 +32,15 @@ clues(obj,function(minutes,mph,carᐅmodel) {
 });
 ```
 
-Clues recursively solves for properties of nested object.  Whenever `clues` hits a property that is an unresolved function it will parse the argument names (if any) and attempt to resolve the argument values (from properties within same scope that have the same name as each argument).  Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution.   If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..   Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.   
+Clues recursively solves for properties of nested object.  Whenever `clues` hits a property that is an unresolved function it will parse the argument names (if any) and attempt to resolve the argument values (from properties within same scope that have the same name as each argument).  Any property requested, either directly or indirectly, will be immediately morphed into a promise on its own resolution or the solved value (in the case where it was not asynchronous).  If any requested unresolved function requires other properties as inputs, those required properties will also be replaced with promises on their resolution etc..   Once all dependencies of any given function have been resolved, the function will be evaluated and the corresponding promise resolved (or rejected) by the outcome.   
+
+#### Updates in 4.0
+Clues 4.0 contains a number of significant changes:
+
+* Internal value resolution only uses promises when it absolutely has to.
+* If previously resolved or reject Bluebird promises are used, their values are introspected and used immediately rather than deferred.  This eases a lot of pressure on `nextTick` promise resolution.
+* As a result, `{ k: () => 5 }` will be turned into `{ k: 5 }` if you ask Clues to solve for `k`
+* For performance reasons, throwing an object (e.g. `throw { message: 'ERROR_OCCURRED', details: 5 }`) will now only retain the keys `message` and `value`.  `value` can contain any object with whatever details you want bubbled all the way up.
 
 #### Function signature
 The basic function signature is simple and **always** returns a promise:
@@ -61,7 +69,7 @@ Here are a few examples:
 ```js
 clues(obj,'person').then(console.log);              // by name
 clues(obj,function(person) { console.log(person); }) // by function
-clues(obj,['person',console.},log]);                  // by array defined function
+clues(obj,['person',console.log]);                  // by array defined function
 var person = await clues(obj,'person')               // Using await inside async function
 ```
 
@@ -75,7 +83,6 @@ There are only a few restrictions and conventions you must into account when def
 * Property names really should never start with an underscore (see [optional variables](#making-arguments-optional-with-the-underscore-prefix))
 * Any [array whose last element is a function](#using-special-arrays-to-define-functions) will be evaluated as a function... Angular style
 * Any function explicitly named [`$private`](#making-anonymous-functions-private) (regardless of the property name) will not be accessible directly 
-* Any function explicitly named `$noThrow` will return any error as an object not as a rejection (similar to `__` prefix in argument names)
 * ES6 arrow functions will be resoleved as regular functions with same `this` context
 
 That's pretty much it.
@@ -96,7 +103,7 @@ and here is an advanced example:
 
 
 ### reusing logic through prototypes 
-Since `clues` modifies any object property referencing a function to the promise of the outcome, a logic/facts object lazily transforms from containing mostly logic functions to containing resolved set of facts (in the form of resolved promises).
+Since `clues` modifies any object property referencing a function to the promise of the outcome, a logic/facts object lazily transforms from containing mostly logic functions to containing resolved set of facts (possibly in the form of resolved promises).
 
 An entirely fresh logic/facts object is required for a different context (i.e. different set known initial facts).  A common pattern is to define all logic in a static object (as the prototype) and then only provide instances of this logic/facts object to the `clues` function, each time a new context is required.   This way, the original logic functions themselves are never "overwritten", as the references in the clones switch from pointing to a function in the prototype to a promise on its resolution as each property is lazily resolved on demand.
 
@@ -139,7 +146,7 @@ obj = Object.create(Logic,{
 
 ```
 ### handling rejection
-Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref`, the name of the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  The rejection object will also contain `fullref`, a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.  The rejection handling by `clues` will not force errors into formal Error Objects, which can be useful to distinguish between javascript errors (which are Error Objects with a defined `.stack` property) and customer 'string' error messages (which may not have `.stack`).
+Errors (i.e. rejected promises in `clues`) will include a `ref` property showing which logic function (by property name) is raising the error.  If the thrown error is not an object (i.e. a string), the resulting error will be a (generic) object with `message` showing the thrown message and `ref`, the name of the logic function.  If the erroring function was called by a named logic function, the name of that function will show up in the `caller` property of the response.  The rejection object will also contain `fullref`, a property that shows the full path of traversal (through arguments and dots) to the function that raised the error.  The rejection handling by `clues` will not force errors into formal Error Objects, which can be useful to distinguish between javascript errors (which are Error Objects with a defined `.stack` property) and customer 'string' error messages (which may not have `.stack`).  You can pass more information on the error by rejecting with an object with both `.message` and `.value` in it - `.value` can contain an object with whatever information you like in it.
 
 Example: passing thrown string errors to the client while masking javascript error messages
 ```js
