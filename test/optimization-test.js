@@ -27,6 +27,6 @@ const code = `
 `;
 
 t.test('V8 compiler', async t => {
-  const d = await execAsync('echo "'+code+'" | node  --allow-natives-syntax');
+  const d = await execAsync('echo "'+code+'" | node  --allow-natives-syntax', { cwd: __dirname });
   t.same(!!((d & 4) || (d & 16)), true);
 });
