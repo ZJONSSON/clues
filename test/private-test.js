@@ -48,9 +48,7 @@ t.test('private functions', {autoend: true}, t => {
 
     t.same(MTOP,380,'is available indirectly');
 
-    // TODO: this isn't really possible... unless we always wrap in a promise?
-    //t.same(M1.message,'M1 not defined','private fn not available directly');
-
+    t.same(M1.message,'M1 not defined','private fn not available directly');
     t.same(facts.M1.value(),10,'private fn promise has the resolved value');
     t.same(M2.message,'M2 not defined','private fn not available directly');
     t.same(facts.M2.value(),300,'private fn promise has the resolved value');

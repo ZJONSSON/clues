@@ -318,7 +318,7 @@
       e => reject(e, fullref, caller, ref)
     );
 
-    if (fn.name == 'private' || fn.name == '$private') {
+    if (fn.name == 'private' || fn.name == '$private' || fn.private) {
       if (!isPromise(value)) value = clues.Promise.resolve(value);
       value.private = true;
     }
