@@ -10,12 +10,12 @@ t.test('cancellation', {autoend: true}, async t => {
   const Logic = {
     M1 : () => new Promise(function(resolve,reject,onCancel) {
       onCancel(() => cancel.M1 = true);
-      setTimeout(() => resolve(10),130);
+      setTimeout(() => resolve(10),330);
     }),
 
     M2 : () => new Promise(function(resolve,reject,onCancel) {
       onCancel(() => cancel.M2 = true);
-      setTimeout(() => resolve(50),170);
+      setTimeout(() => resolve(50),370);
     }),
 
     M3 : () => new Promise(function(resolve,reject,onCancel) {
@@ -42,7 +42,7 @@ t.test('cancellation', {autoend: true}, async t => {
   // Cancelling in 100ms  
   setTimeout(res.cancel.bind(res),100);
 
-  await Promise.delay(200);
+  await Promise.delay(400);
 
   t.test('should not return results', t => {
     t.same(gotResults,undefined);
