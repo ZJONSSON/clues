@@ -63,3 +63,32 @@ let injected = function($global) {
 clues(injected,'db.user',{input:{userid:'johndoe'}})
   .then(console.log,console.log);
 ```
+
+### `inspect`
+
+Inspect provides an endpoint that allows graphical inspection (using viz.js) of the api tree under a reptile-server. It takes the root instance to be inspected as an argument.
+
+Simply put in the logic class, something like:
+```js
+const reptileServer = require('clues/util/reptile-server');
+const inspect = require('clues/util/inspect');
+
+class Logic {
+  method a() {}
+  method b() {}
+
+  inspect() {
+    return inspect(this);
+  }
+}
+
+express()
+  .use('/api',reptileServer(Logic))
+  .listen(3003);
+```
+
+To inspect the root you simple go to path
+`http://localhost:3003/api/inspect/app`
+
+Method a can be inspected by:
+`http://localhost:3003/api/inspect/app/a`
