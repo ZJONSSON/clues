@@ -140,7 +140,7 @@ module.exports = function(api,options) {
           })
           .then(function(d) {
             if (options.single) {
-              _res.status(d.error ? (d.status||400) : 200)
+              _res.status(d && d.error ? (d.status||400) : 200)
                 .end(stringify(d,pretty,debug,req));
               _res.write = noop;
               _res.end = noop;
