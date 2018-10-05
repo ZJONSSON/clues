@@ -43,6 +43,8 @@
   const Rejection = clues.Promise.reject();
   Rejection.suppressUnhandledRejections();
   clues.reject = d => Object.create(Rejection,{_fulfillmentHandler0: {value: d}});
+  clues.matchArgs = matchArgs;
+  clues._rawClues = _rawClues;
 
   function clues(logic,fn,$global,caller,fullref) {
     try { 
