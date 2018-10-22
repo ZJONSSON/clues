@@ -57,7 +57,28 @@ t.test('error', {autoend: true},t => {
       t.equal(e.message,'somemessage','message ok');
       t.equal(e.value,'somedetails','details ok');
     });
+
+    t.test('obj - with cache', async t => {
+      const e = await clues({OBJ: () => {
+        throw {
+          message: 'somemessage',
+          cache: true
+        };
+      }},'OBJ').catch(Object);
+      t.equal(e.message,'somemessage','message ok');
+      t.equal(e.cache,true,'details ok');
+    });
+    t.test('obj - without cache', async t => {
+      const e = await clues({OBJ: () => {
+        throw {
+          message: 'somemessage'
+        };
+      }},'OBJ').catch(Object);
+      t.equal(e.message,'somemessage','message ok');
+      t.equal(e.cache,undefined,'details ok');
+    });
   });
+
 
   t.test('$logError', {autoend: true}, t => {
 
