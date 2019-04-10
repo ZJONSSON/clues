@@ -19,6 +19,9 @@
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e || {},fullref,caller,ref));
   var isPromise = f => f && f.then && typeof f.then === 'function';
   var noop = d => d;
+  var undefinedPromise = clues.Promise.resolve(undefined);
+  var fakePrivate = function(){};
+  fakePrivate.private = true;
 
   function matchArgs(fn) {
     if (!fn.__args__) {
@@ -260,6 +263,10 @@
       let result = null;
       try {
         result = fn.apply(logic || {}, args);
+        if (result === undefined) {
+          result = undefinedPromise;
+          fn = fakePrivate; // private function results remain promises in `Logic`.  We don't want to modify the fn, and this is somewhat more efficient than adding another flag
+        }
       }
       catch (e) {
         // If fn is a class we solve for the constructor variables (if defined) and return a new instance

@@ -13,21 +13,23 @@ t.test('optional argument', {autoend: true}, t => {
     optional_data : function(_data) { return _data; }
   };
 
-  const facts = () => Object.create(Logic);
-
   t.test('not supplied', async t => {
+    const facts = () => Object.create(Logic);
     t.same(await clues(facts,'passthrough'),undefined,'returns undefined');
   });
 
   t.test('internal default', async t => {
+    const facts = () => Object.create(Logic);
     t.same(await clues(facts,'internalize'),7,'returns the default');
   });
 
   t.test('with a set global', async t => {
+    const facts = () => Object.create(Logic);
     t.same(await clues(facts,'passthrough',{optional:10}),10,'returns global');
   });
 
   t.test('with a working function', async t => {
+    const facts = () => Object.create(Logic);
     t.same(await clues(facts,'optional_data'),5,'returns value');
   });
 
