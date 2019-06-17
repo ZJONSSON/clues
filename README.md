@@ -158,6 +158,19 @@ Example: passing thrown string errors to the client while masking javascript err
 
 You can provide a function called `$logError` in the `$global` object to record any true javascript errors (with `.stack`) when they occur. The `$logError` function will be called with the error object as first argument and `fullref` as the second argument.  For proper logging it is important to capture the error at source, as the dependencies might be optional - in which case the error never reaches the original request.
 
+You can also specify a default value for an argument if it is either missing or an error/rejection using [default parameters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters) in the function signature:
+
+```js.
+var obj = {
+  a: () => 1,
+  b: () => Promise.reject('Problem'),
+  result: (a = 100, b = 21, missing = 2) => a * b * missing
+};
+
+clues(obj,'result').then(console.log); // console logs 42  (1 * 21 * 2)
+```
+
+
 ### making arguments optional with the underscore prefix
 If any argument to a function resolves as a rejected promise (i.e. errored) then the function will not run and will also be rejected.  But sometimes we want to continue nevertheless (example: user input that is optional).  Any argument to any function can be made optional by prefixing the argument name with an underscore.   If the resolution of the optional argument returns a rejected promise (or the optional argument does not exist), then the value of this argument to the function will simply be `undefined`.   
 

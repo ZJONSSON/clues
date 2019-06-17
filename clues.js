@@ -25,18 +25,29 @@
 
   function matchArgs(fn) {
     if (!fn.__args__) {
+      let def,m;
       var match = fn.prototype && fn.prototype.constructor.toString() || fn.toString();
       match = match.replace(/^\s*async/,'');
       match = reArgs.exec(match) || reEs6.exec(match) || reEs6Class.exec(match);
       fn.__args__ = !match ? [] : match[1].replace(/\s/g,'')
         .split(',')
-        .filter(function(d) {
+        .map(function(d) {
           if (d === '$private')
             fn.private = true;
           if (d === '$prep')
             fn.prep = true;
-          return d.length;
-        });
+
+          m = /(.*)\s*=\s*(.*)/.exec(d);
+
+          if (m) {
+            def = def || {};
+            def[m[1]] = m[2];
+            d = m[1];
+          }
+          return d;
+        })
+        .filter(d => d.length);
+      fn.__args__.def = def;
     }
     return fn.__args__;
   }
@@ -116,7 +127,7 @@
   }
 
   function _rawClues(logic,fn,$global,caller,fullref) {
-    var args,ref;
+    var args,ref,match;
 
     if (!$global) $global = {};
 
@@ -183,15 +194,17 @@
       }
       args = fn.slice(0,fn.length-1);
       fn = fn[fn.length-1];
-      var fnArgs = matchArgs(fn);
-      var numExtraArgs = fnArgs.length-args.length;
+      match = matchArgs(fn);
+      var numExtraArgs = match.length-args.length;
       if (numExtraArgs) {
-        args = args.concat(fnArgs.slice(numExtraArgs));
+        args = args.concat(match.slice(numExtraArgs));
       }
     }
 
-    if (typeof fn === 'function')
-      args = (args || matchArgs(fn));
+    if (typeof fn === 'function') {
+      match = matchArgs(fn);
+      args = args || match;
+    }
 
     // If fn name is private or promise private is true, reject when called directly
     if (fn && (!caller || caller == '__user__') && ((typeof(fn) === 'function' && (fn.private || fn.name == '$private' || fn.name == 'private')) || (fn.then && fn.private)))
@@ -235,6 +248,7 @@
       }
 
       let processError = e => {
+        if (match && match.def && match.def[arg] !== undefined) return match.def[arg];
         if (optional) return (showError) ? e : undefined;
         let rejection = reject(e);
         if (!errorArgs) errorArgs = rejection;
