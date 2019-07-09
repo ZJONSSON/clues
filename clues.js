@@ -11,13 +11,12 @@
   var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
   var reEs6Class = /^\s*[a-zA-Z0-9\-$_]+\s*\((.*?)\)\s*{/;
-  var createEx = (e,fullref,caller,ref,report) => {
-    if (e.fullref) return e;
-    let result = {ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || report, value: e.value, cache: e.cache};
-    return result;
-  }; 
-  var reject = (e,fullref,caller,ref) => clues.reject(createEx(e || {},fullref,caller,ref));
-  var isPromise = f => f && f.then && typeof f.then === 'function';
+
+  var reject = (e,fullref,caller,ref) => {
+    let ex = e.fullref ? e : {ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || false, value: e.value, cache: e.cache};    
+    return clues.reject(ex);
+  };
+
   var noop = d => d;
   var undefinedPromise = clues.Promise.resolve(undefined);
   var fakePrivate = function(){};
@@ -58,7 +57,7 @@
   }
 
   function promiseHelper(val, success, error, _finally, _errorMessage) {
-    if (isPromise(val)) {
+    if (val && val.then) {
       // if it's already resolve, we can just use that direct
       if (!val.isFulfilled) val = clues.Promise.resolve(val);
       if (val.isFulfilled()) return promiseHelper(val.value(), success, error, _finally);
@@ -83,7 +82,7 @@
     let result = null;
     try { 
       result = success(val); 
-      if (isPromise(result) && result.isRejected && result.isRejected()) {
+      if (result && result.then && result.isRejected && result.isRejected()) {
         result = promiseHelper(null, success, error, _finally, result.reason());
       }
     } 
@@ -120,7 +119,7 @@
 
     if (!$global) $global = {};
 
-    if (typeof logic === 'function' || isPromise(logic))
+    if (typeof logic === 'function' || (logic && logic.then))
       return promiseHelper(_rawClues({},logic,$global,caller,fullref),
         logic => _rawClues(logic,fn,$global,caller,fullref));
       
@@ -200,7 +199,7 @@
     // If the logic reference is not a function, we simply return the value
     if (typeof fn !== 'function' || ((ref && ref[0] === '$') && !fn.prep && fn.name !== '$prep')) {
       // If the value is a promise we wait for it to resolve to inspect the result
-      if (isPromise(fn))
+      if (fn && fn.then)
         return promiseHelper(fn, d => {
           return (typeof d == 'function' || (d && typeof d == 'object' && d.length)) ? _rawClues(logic,d,$global,caller,fullref) : d;
         });
@@ -248,7 +247,7 @@
         res = processError(e);
       }
 
-      if (!argsHasPromise && isPromise(res)) argsHasPromise = true;
+      if (!argsHasPromise && res && res.then) argsHasPromise = true;
 
       return res;
     });
@@ -285,7 +284,7 @@
         }
       }
 
-      if (isPromise(result) && !result.isFulfilled) result = clues.Promise.resolve(result); // wrap non-bluebird promise
+      if (result && result.then && !result.isFulfilled) result = clues.Promise.resolve(result); // wrap non-bluebird promise
       return result;
     };
 
@@ -293,7 +292,9 @@
       if (hasHandledError) return reject(e);
       hasHandledError = true;
 
-      let wrappedEx = createEx(e || {}, fullref, caller, ref, true);
+      let ec = e || {};
+      let wrappedEx = ec.fullref ? ec : {ref : ec.ref || ref || fullref, message: ec.message || ec, fullref: ec.fullref || fullref, caller: ec.caller || caller, stack: ec.stack || '', error: true, notDefined: ec.notDefined, report: ec.report || true, value: ec.value, cache: ec.cache};
+      
       if (e && e.stack && typeof $global.$logError === 'function') $global.$logError(wrappedEx, fullref);
       return storeRef(logic, ref, reject(wrappedEx), fullref, caller);
     };
@@ -308,7 +309,7 @@
       args.forEach(input => input && input.suppressUnhandledRejections && input.suppressUnhandledRejections());
       value = handleError(errorArgs.reason());
     }
-    else if (isPromise(inputs)) {
+    else if (inputs && inputs.then) {
       value = inputs.then(d => solveFn(d)).catch(e => {
         return handleError(e);
       }).finally(captureTime);
@@ -326,7 +327,7 @@
     );
 
     if (fn.name == 'private' || fn.name == '$private' || fn.private) {
-      if (!isPromise(value)) value = clues.Promise.resolve(value);
+      if (!(value && value.then)) value = clues.Promise.resolve(value);
       value.private = true;
     }
 
