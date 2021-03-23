@@ -84,6 +84,7 @@ t.test('error', {autoend: true},t => {
 
     const Global = {
       $logError : function(e,f) {
+        this.counter = (this.counter||0)+1;
         this.error = e;
         this.fullref = f;
       }
@@ -109,8 +110,21 @@ t.test('error', {autoend: true},t => {
 
       await clues(facts,'stack_error_promise',$global).then(shouldErr,Object);
       t.same($global.error.message,'error','error passed to $logError');
+      t.same($global.counter,1,'logError is called once');
       t.ok($global.error.stack,'contains a stack');
       t.same($global.error.fullref,'stack_error_promise','fullref ok');
+    });
+    t.test('promise rejected with a stack', async t => {
+      const $global = Object.create(Global);
+      const facts = {
+        stack_error_promise: ()  => clues.reject(new Error('error')),
+        reffed_error: stack_error_promise => stack_error_promise
+      };
+
+      await clues(facts,'reffed_error',$global).then(shouldErr,Object);
+      t.same($global.error.message,'error','error passed to $logError');
+      t.same($global.counter,1,'logError is called once');
+      t.ok($global.error.stack,'contains a stack');
     });
 
     t.test('error without a stack (rejection)', async t => {
