@@ -20,7 +20,10 @@ const code = `
 
   clues();
   %OptimizeFunctionOnNextCall(clues);
-
+  
+  clues();
+  %OptimizeFunctionOnNextCall(clues);
+  
   //The next call
   clues()
   process.stdout.write(String(%GetOptimizationStatus(clues)));
