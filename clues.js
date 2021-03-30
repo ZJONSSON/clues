@@ -13,7 +13,7 @@
   var reEs6Class = /^\s*[a-zA-Z0-9\-$_]+\s*\((.*?)\)\s*{/;
   var createEx = (e,fullref,caller,ref,report) => {
     if (e.fullref) return e;
-    let result = {ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || report, value: e.value, cache: e.cache};
+    let result = {ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || report, value: e.value, cache: e.cache, cluesHasLogged: e.cluesHasLogged};
     return result;
   }; 
   var reject = (e,fullref,caller,ref) => clues.reject(createEx(e || {},fullref,caller,ref));
@@ -294,7 +294,10 @@
       hasHandledError = true;
 
       let wrappedEx = createEx(e || {}, fullref, caller, ref, true);
-      if (e && e.stack && typeof $global.$logError === 'function') $global.$logError(wrappedEx, fullref);
+      if (e && e.stack && !wrappedEx.cluesHasLogged && typeof $global.$logError === 'function') {
+        wrappedEx.cluesHasLogged = true;
+        $global.$logError(wrappedEx, fullref);
+      }
       return storeRef(logic, ref, reject(wrappedEx), fullref, caller);
     };
 
