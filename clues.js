@@ -8,9 +8,9 @@
     self.clues = clues;
   }
 
-  var reArgs = /^\s*function.*?\(([^)]*?)\).*/;
+  var reArgs = /^\s*function(?:.|\n)*?\(([^)]*?)\).*/;
   var reEs6 =  /^\s*\({0,1}([^)]*?)\){0,1}\s*=>/;
-  var reEs6Class = /^\s*[a-zA-Z0-9\-$_]+\s*\((.*?)\)\s*{/;
+  var reEs6Class = /^\s*[a-zA-Z0-9\-$_]+\s*\(((?:.|\n)*?)\)\s*{/;
   var createEx = (e,fullref,caller,ref,report) => {
     if (e.fullref) return e;
     let result = {ref : e.ref || ref || fullref, message: e.message || e, fullref: e.fullref || fullref, caller: e.caller || caller, stack: e.stack || '', error: true, notDefined: e.notDefined, report: e.report || report, value: e.value, cache: e.cache, cluesHasLogged: e.cluesHasLogged};
