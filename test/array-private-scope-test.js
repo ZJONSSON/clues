@@ -4,7 +4,7 @@ const t = require('tap');
 
 function shouldError() { throw 'Should not run';}
 
-t.test('Array fn private scope', {autoend:true}, t => {
+t.test('Array fn private scope', async t => {
 
   t.test('With only array logic', async t => {
     function privateObj() {

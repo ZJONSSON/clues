@@ -4,7 +4,7 @@ const t = require('tap');
 
 function shouldErr() { throw 'Should throw an error'; }
 
-t.test('private functions', {autoend: true}, t => {
+t.test('private functions', async t => {
   const Logic = {
     M1 : function($private) { return Promise.delay(100,10); },
     M2 : function $private() { return Promise.delay(20,300); },
@@ -16,7 +16,7 @@ t.test('private functions', {autoend: true}, t => {
       ) { return M3+M4; }
   };
 
-  t.test('before resolution', {autoend: true}, t => {
+  t.test('before resolution', async t => {
     t.test('private regular function', async t => {
       const facts = Object.create(Logic);
       const e = await clues(facts,'M2').catch(Object);

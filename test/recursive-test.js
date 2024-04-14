@@ -4,7 +4,7 @@ const t = require('tap');
 
 const shouldErr = () => { throw 'Should Error'; };
 
-t.test('In recursive logic',{autoend: true}, t => {
+t.test('In recursive logic',async t => {
   const Logic = {
     simple : {
       value : 2,

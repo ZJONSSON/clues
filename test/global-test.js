@@ -3,7 +3,7 @@ const t = require('tap');
 
 const shouldErr = () => { throw 'Should error'; };
 
-t.test('Global variable', {autoend: true},  t => {
+t.test('Global variable', async t => {
   const Logic = {
     a: 123,
     b: {

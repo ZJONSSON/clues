@@ -3,7 +3,7 @@ const t = require('tap');
 
 function shouldErr() { throw 'Should throw an error'; }
 
-t.test('error', {autoend: true},t => {
+t.test('error', async t => {
   const c = {a: function(b) { return b;}};
 
   t.test('when argument is not found', async t => {
@@ -32,7 +32,7 @@ t.test('error', {autoend: true},t => {
     }; }
   };
 
-  t.test('throw', {autoend:true}, t => {
+  t.test('throw', async t => {
 
     t.test('directly', async t => {
       const facts = Object.create(Logic);
@@ -80,7 +80,7 @@ t.test('error', {autoend: true},t => {
   });
 
 
-  t.test('$logError', {autoend: true}, t => {
+  t.test('$logError', async t => {
 
     const Global = {
       $logError : function(e,f) {

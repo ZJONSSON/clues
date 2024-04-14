@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 const t = require('tap');
 
 
-t.test('undefined', {autoend: true},t => {
+t.test('undefined', async t => {
   
   const Logic = {
     a : function() { return undefined; },
@@ -18,7 +18,7 @@ t.test('undefined', {autoend: true},t => {
     
   };
 
-  t.test('functions returning undefined are ok', {autoend:true}, t => {
+  t.test('functions returning undefined are ok', async t => {
 
     t.test('immediate call', async t => {
       const facts = Object.create(Logic);

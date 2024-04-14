@@ -4,7 +4,7 @@ const t = require('tap');
 
 const shouldErr = () => { throw 'Should error'; };
 
-t.test('optional argument', {autoend: true}, t => {
+t.test('optional argument', async t => {
 
   const Logic = {
     data : function() { return Promise.delay(1000,5); },

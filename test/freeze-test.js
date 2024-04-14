@@ -3,7 +3,7 @@ const t = require('tap');
 
 const shouldErr = () => { throw 'SHOULD_ERROR'; };
 
-t.test('Frozen logic', {autoend: true}, t => {
+t.test('Frozen logic', async  t => {
   let calls = 0;
 
   const Logic = {

@@ -2,9 +2,9 @@ const clues = require('../clues');
 const Promise = require('bluebird');
 const t = require('tap');
 
-t.test('$property', {autoend:true, jobs: 10}, t => {
+t.test('$property', async t => {
 
-  t.test('in simple logic with $property', {autoend: true}, t => {
+  t.test('in simple logic with $property', async t => {
     const facts = {
       simple: {
         count : 0,
@@ -67,7 +67,7 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     t.same(facts.concurrent.count,1,'and should not rerun the function');
   });
 
-  t.test('$property inside a function', {autoend: true}, t => {
+  t.test('$property inside a function', async t => {
     const facts = {
       a : 5,
       funct : a => ({
@@ -87,7 +87,7 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     });
   });
 
-  t.test('$property inside a nested structure', {autoend:true}, t => {
+  t.test('$property inside a nested structure', async t => {
     const facts = {
       nested : {
         $property : function(ref) {
@@ -110,7 +110,7 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     });
   });
 
-  t.test('when function name is $property', {autoend: true}, t => {
+  t.test('when function name is $property', async t => {
     const facts = {
       a: 5,
       shorthand : function $property(ref) {
@@ -129,7 +129,7 @@ t.test('$property', {autoend:true, jobs: 10}, t => {
     });
   });
 
-  t.test('when argument name is $property', {autoend: true}, t => {
+  t.test('when argument name is $property', async t => {
 
     const facts = {
       a: 5,

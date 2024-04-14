@@ -1,7 +1,7 @@
 const clues = require('../clues');
 const t = require('tap');
 
-t.test('$ as a first letter', {autoend:true}, t => {
+t.test('$ as a first letter', async t => {
 
   const Logic = {
     a : 10,
