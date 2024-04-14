@@ -4,7 +4,7 @@ const t = require('tap');
 
 Promise.config({cancellation:true});
 
-t.test('cancellation', {autoend: true}, async t => {
+t.test('cancellation', async t => {
   const cancel = {};
 
   const Logic = {

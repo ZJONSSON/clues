@@ -44,8 +44,8 @@ const injected = $global => inject(Object.create(Logic), {
 
 },$global);
 
-t.test('inject', {autoend: true}, t => {
-  t.test('simple example', {autoend: true}, t => {
+t.test('inject', async t => {
+  t.test('simple example', async t => {
     t.test('modified api tree', async t => {
       const d = await clues(injected,'db.user',{input:{userid:'johndoe'}});
       t.same(d.userid,'test_johndoe','username is now available');

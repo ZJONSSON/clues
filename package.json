@@ -17,10 +17,10 @@
     "bluebird": "~3.5.2"
   },
   "devDependencies": {
-    "tap": "~10.3.2"
+    "tap": "^18.7.2"
   },
   "license": "MIT",
   "scripts": {
-    "test": "tap test --jobs=10 -Rspec --coverage-report=html --no-browser"
+    "test": "npx tap --coverage-report=lcov --coverage-report=html --allow-incomplete-coverage"
   }
 }

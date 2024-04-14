@@ -13,7 +13,7 @@ const facts = () => ({
 });
 
 
-t.test('$caller', {autoend:true}, t => {
+t.test('$caller', async t => {
   t.test('with fn called directly', async t => {
     t.same(await clues(facts,'a.b.caller'),undefined,'is null without caller');
     t.same(await clues(facts,'a.b.caller',{},'__user__'),'__user__','shows with caller');

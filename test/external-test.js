@@ -2,9 +2,9 @@ const clues = require('../clues');
 const Promise = require('bluebird');
 const t = require('tap');
 
-t.test('$external', {autoend:true, jobs: 10}, t => {
+t.test('$external', async t => {
 
-  t.test('in simple logic with $external', {autoend: true}, t => {
+  t.test('in simple logic with $external', async t => {
     const facts = {
       simple: {
         count : 0,
@@ -67,7 +67,7 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     t.same(facts.concurrent.count,1,'and should not rerun the function');
   });
 
-  t.test('$external inside a function', {autoend: true}, t => {
+  t.test('$external inside a function', async t => {
     const facts = {
       a : 'ok:',
       funct : a => ({
@@ -87,7 +87,7 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     });
   });
 
-  t.test('when function name is $external', {autoend: true}, t => {
+  t.test('when function name is $external', async t => {
     const facts = {
       a: 'ok:',
       shorthand : function $external(ref) {
@@ -108,7 +108,7 @@ t.test('$external', {autoend:true, jobs: 10}, t => {
     });
   });
 
-  t.test('when argument name is $external', {autoend: true}, t => {
+  t.test('when argument name is $external', async t => {
 
     const facts = {
       a: 'ok:',

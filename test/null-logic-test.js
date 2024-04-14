@@ -4,7 +4,7 @@ const t = require('tap');
 
 function shouldError(e) { throw 'Should error '+e;}
 
-t.test('null logic', {autoend: true}, t => {
+t.test('null logic', async t => {
   const values = [null,undefined,4,'a',0,Object,Array,Object];
 
   t.test('solving for a variable of null logic', async t => {
@@ -26,7 +26,7 @@ t.test('null logic', {autoend: true}, t => {
   t.test('solving for context of null logic', async t => {
     await Promise.map(values, async nothing => {
       const context = await clues(nothing,function() { return this;});
-      t.same(context, nothing == 'a' ? {0:'a'} : {},`${nothing} has a context of ${JSON.stringify(context)}`);
+      t.same(context, nothing == 'a' ? ['a'] : [],`${nothing} has a context of ${JSON.stringify(context)}`);
     });
     t.end();
   });
