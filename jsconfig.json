@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "allowJs": true,        // include .js in the program
+    "checkJs": true,        // enable type-checking for them
+    "strict": false,         // implies noImplicitAny, etc.
+    "noEmit": true,         // skip JS output; we only want errors
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    "types": ["node"],
+  }
+}

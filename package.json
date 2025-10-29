@@ -1,6 +1,6 @@
 {
   "name": "clues",
-  "version": "4.0.5",
+  "version": "4.1.5",
   "description": "Lightweight logic tree solver using promises.",
   "keywords": [
     "asynchronous",
@@ -13,6 +13,7 @@
     "url": "http://github.com/ZJONSSON/clues.git"
   },
   "main": "clues.js",
+  "types": "clues.d.ts",
   "dependencies": {
     "bluebird": "~3.5.2"
   },
